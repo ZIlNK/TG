@@ -1,0 +1,65 @@
+:: StoryCaption
+<<set _healthPct to Math.max(0, Math.min(100, Math.round(($player.health / $player.maxHealth) * 100)))>>
+<<set _staminaPct to Math.max(0, Math.min(100, Math.round(($player.stamina / $player.maxStamina) * 100)))>>
+<<set _stressPct to Math.max(0, Math.min(100, $player.stress))>>
+<<set _traumaPct to Math.max(0, Math.min(100, $player.trauma))>>
+<<set _arousalPct to Math.max(0, Math.min(100, $player.arousal))>>
+<<set _controlPct to Math.max(0, Math.min(100, $player.control))>>
+
+<div class="sidebar-section">
+  <div class="sidebar-title">状态</div>
+  <div class="sidebar-info"><strong><<print $player.name>></strong></div>
+  <div class="sidebar-info">$<<print $player.money>></div>
+</div>
+
+<div class="sidebar-section">
+  <div class="sidebar-title">时间</div>
+  <div class="sidebar-info"><<print $time.dayName>>，第 <<print $time.day>> 天</div>
+  <div class="sidebar-info"><<print $time.hour>>:<<print String($time.minute).padStart(2, '0')>></div>
+  <div class="sidebar-info"><<print $world.weather>>，<<print $world.temperature>>°C</div>
+</div>
+
+<div class="sidebar-section">
+  <div class="sidebar-title">位置</div>
+  <div class="sidebar-info"><<print $location>></div>
+</div>
+
+<div class="sidebar-section">
+  <div class="sidebar-title">属性</div>
+
+  <div class="stat-bar">
+    <div class="stat-bar-label"><span>生命</span><span><<print $player.health>>/<<print $player.maxHealth>></span></div>
+    <div class="stat-bar-track"><div class="stat-bar-fill stat-health" @style="'width: ' + _healthPct + '%;'"></div></div>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-bar-label"><span>体力</span><span><<print $player.stamina>>/<<print $player.maxStamina>></span></div>
+    <div class="stat-bar-track"><div class="stat-bar-fill stat-stamina" @style="'width: ' + _staminaPct + '%;'"></div></div>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-bar-label"><span>压力</span><span><<print $player.stress>>%</span></div>
+    <div class="stat-bar-track"><div class="stat-bar-fill stat-stress" @style="'width: ' + _stressPct + '%;'"></div></div>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-bar-label"><span>创伤</span><span><<print $player.trauma>>%</span></div>
+    <div class="stat-bar-track"><div class="stat-bar-fill stat-trauma" @style="'width: ' + _traumaPct + '%;'"></div></div>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-bar-label"><span>欲望</span><span><<print $player.arousal>>%</span></div>
+    <div class="stat-bar-track"><div class="stat-bar-fill stat-arousal" @style="'width: ' + _arousalPct + '%;'"></div></div>
+  </div>
+
+  <div class="stat-bar">
+    <div class="stat-bar-label"><span>自控</span><span><<print $player.control>>%</span></div>
+    <div class="stat-bar-track"><div class="stat-bar-fill stat-control" @style="'width: ' + _controlPct + '%;'"></div></div>
+  </div>
+</div>
+
+<div class="sidebar-section">
+  <div class="sidebar-title">游戏</div>
+  <div class="sidebar-info">v<<print $game.version>></div>
+  <div class="sidebar-info">难度：<<print $game.difficulty>></div>
+</div>

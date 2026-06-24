@@ -1,0 +1,58 @@
+:: StoryInit
+<<set $player = {
+  name: "Player",
+  health: 100,
+  maxHealth: 100,
+  stamina: 80,
+  maxStamina: 80,
+  stress: 10,
+  trauma: 0,
+  money: 25,
+  arousal: 0,
+  control: 100,
+  allure: 15,
+  inventory: []
+}>>
+<<set $time = {
+  hour: 8,
+  minute: 0,
+  day: 1,
+  dayName: "Monday"
+}>>
+<<set $location = "Bedroom">>
+<<set $game = {
+  version: "0.1.0",
+  started: true,
+  cheats: false,
+  difficulty: "normal"
+}>>
+<<set $theme = "default">>
+<<set $world = {
+  weather: "clear",
+  temperature: 22
+}>>
+<<set $modRegistry = []>>
+<<set $debug = false>>
+<<set $llmConfig = {
+  enabled: false,
+  provider: "ollama",
+  endpoint: "http://localhost:11434",
+  model: "llama3.2",
+  apiKey: "",
+  maxTokens: 512,
+  temperature: 0.8
+}>>
+<<set $llmHistory = []>>
+<<set $llmSession = {
+  active: false,
+  sceneContext: "",
+  lastResponse: ""
+}>>
+<<set $generatedScenes = {} >>
+<<set $dynamicSceneId = "" >>
+<<set $npcs = {} >>
+<<set $quests = {} >>
+<<set $worldMemory = { events: [] } >>
+<<set $activeNPCId = "" >>
+<<set $activeQuestId = "" >>
+<<set $llmGatewayTarget = "" >>

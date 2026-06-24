@@ -1,0 +1,51 @@
+:: DynamicScene
+<<set _scene to $generatedScenes[$dynamicSceneId]>>
+
+<<if _scene>>
+  !<<print _scene.title>>
+
+  <<sceneimg _scene.location>>
+
+  <<print _scene.text>>
+
+  <<set _opts to _scene.options>>
+  <<for _opt range _opts>>
+    <<capture _opt>>
+      <<if _opt.target.indexOf("llm:") eq 0>>
+        <<link _opt.label>>
+          <<set $llmGatewayTarget to _opt.target>>
+          <<goto "LLMGateway">>
+        <</link>>
+      <<else>>
+        <<action _opt.label _opt.target _opt.tooltip>>
+      <</if>>
+    <</capture>>
+  <</for>>
+<<else>>
+  !场景不可用
+
+  找不到请求的动态场景。它可能是在另一个存档中生成的，或者场景 ID 缺失。
+<</if>>
+
+<<action "返回街道" "Street">>
+
+:: LLMGateway
+<<silently>>
+  <<set _target to $llmGatewayTarget>>
+  <<set _parts to _target.split(":")>>
+  <<set _type to _parts[1]>>
+  <<set _seed to _parts[2] || "">>
+<</silently>>
+
+<<if _type is "generate">>
+  <<set _sceneDef = {
+    location: $location,
+    mood: "neutral",
+    description: _seed
+  }>>
+  <<llmscene2 _sceneDef.location _sceneDef.mood _sceneDef.description>>
+<<else>>
+  未知的 LLM 网关目标：<<print _target>>
+
+  <<action "返回" "DynamicScene">>
+<</if>>

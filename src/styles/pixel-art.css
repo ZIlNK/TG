@@ -1,0 +1,39 @@
+/* Pixel art image styling */
+
+.pixel-art {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  image-rendering: -moz-crisp-edges;
+}
+
+.scene-image {
+  display: block;
+  max-width: 100%;
+  border: 2px solid #444444;
+  border-radius: 4px;
+  margin: 1rem 0;
+  background: #111111;
+}
+
+html[data-pixel-scale="1x"] .scene-image {
+  width: 160px;
+}
+
+html[data-pixel-scale="2x"] .scene-image {
+  width: 320px;
+}
+
+html[data-pixel-scale="3x"] .scene-image {
+  width: 480px;
+}
+
+html[data-pixel-scale="4x"] .scene-image {
+  width: 640px;
+}
+
+@media (max-width: 600px) {
+  .scene-image {
+    width: 100% !important;
+    max-width: 320px;
+  }
+}

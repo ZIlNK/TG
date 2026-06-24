@@ -1,0 +1,204 @@
+/* LLM UI: chat bubbles, typing indicator, streaming text, error states */
+
+.llm-chat-container {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: var(--bg-passage, #222);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 4px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.llm-message {
+  margin: 0.5rem 0;
+  padding: 0.6rem 0.8rem;
+  border-radius: 4px;
+  line-height: 1.5;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.llm-message-user {
+  background: rgba(76, 175, 80, 0.15);
+  border-left: 3px solid #4caf50;
+  margin-left: 1rem;
+}
+
+.llm-message-assistant {
+  background: rgba(33, 150, 243, 0.15);
+  border-left: 3px solid #2196f3;
+  margin-right: 1rem;
+}
+
+.llm-message-role {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-muted, #888);
+  margin-bottom: 0.25rem;
+  font-weight: bold;
+}
+
+.llm-typing {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.5rem 0.8rem;
+  margin: 0.5rem 0;
+  color: var(--text-muted, #888);
+  font-style: italic;
+}
+
+.llm-typing-dots {
+  display: flex;
+  gap: 0.15rem;
+}
+
+.llm-typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--text-muted, #888);
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite ease-in-out both;
+}
+
+.llm-typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.llm-typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+.llm-error-banner {
+  background: rgba(244, 67, 54, 0.15);
+  border: 1px solid #f44336;
+  border-radius: 4px;
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  color: #f44336;
+}
+
+.llm-error-banner pre {
+  margin: 0.5rem 0 0;
+  padding: 0.5rem;
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+  font-size: 0.85rem;
+  overflow-x: auto;
+  white-space: pre-wrap;
+}
+
+.llm-streaming-text {
+  min-height: 1.5em;
+}
+
+.llm-streaming-cursor::after {
+  content: '|';
+  animation: blink 1s step-end infinite;
+  color: var(--accent, #66bb6a);
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.llm-input-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.llm-input-row input {
+  flex: 1;
+  padding: 0.5rem;
+  background: var(--bg-input, #333);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 3px;
+}
+
+.llm-input-row button {
+  padding: 0.5rem 1rem;
+  white-space: nowrap;
+}
+
+.llm-retry-btn {
+  margin-top: 0.5rem;
+}
+
+.llm-config-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 500px;
+}
+
+.llm-config-form label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted, #888);
+  margin-bottom: 0.25rem;
+}
+
+.llm-config-form input,
+.llm-config-form select {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--bg-input, #333);
+  color: var(--text-primary, #fff);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.llm-config-form .form-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.llm-config-form .form-row input {
+  flex: 1;
+}
+
+.llm-options-container {
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.llm-options-container .action-link {
+  margin: 0;
+}
+
+.llm-npc-card,
+.llm-quest-card {
+  margin: 1rem 0;
+  padding: 0.75rem;
+  background: var(--bg-passage, #222);
+  border: 1px solid var(--border-color, #333);
+  border-left: 4px solid #9c27b0;
+  border-radius: 4px;
+}
+
+.llm-npc-card h3,
+.llm-quest-card h3 {
+  margin: 0 0 0.5rem;
+  color: var(--accent, #66bb6a);
+}
+
+.llm-npc-card p,
+.llm-quest-card p {
+  margin: 0.25rem 0;
+  line-height: 1.5;
+}
+
+.llm-quest-card ul {
+  margin: 0.5rem 0;
+  padding-left: 1.25rem;
+}
+
+.llm-quest-card li {
+  margin: 0.25rem 0;
+}
+

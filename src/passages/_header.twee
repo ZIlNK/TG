@@ -1,0 +1,61 @@
+:: PassageHeader
+<<silently>>
+  /* Register default scene images as resources for ThemeEngine */
+  <<script>>
+    if (typeof ThemeEngine !== 'undefined') {
+      ThemeEngine.registerResource('Bedroom', PixelImage.generate('Bedroom', 160, 120));
+      ThemeEngine.registerResource('Street', PixelImage.generate('Street', 160, 120));
+      ThemeEngine.registerResource('Park', PixelImage.generate('Park', 160, 120));
+      ThemeEngine.registerResource('Shop', PixelImage.generate('Shop', 160, 120));
+    }
+
+    /* Ensure LLM state variables exist (important when loading older saves). */
+    if (typeof State !== 'undefined' && State.variables) {
+      if (!State.variables.llmConfig) {
+        State.variables.llmConfig = {
+          enabled: false,
+          provider: 'ollama',
+          endpoint: 'http://localhost:11434',
+          model: 'llama3.2',
+          apiKey: '',
+          maxTokens: 512,
+          temperature: 0.8
+        };
+      }
+      if (!State.variables.llmHistory) {
+        State.variables.llmHistory = [];
+      }
+      if (!State.variables.llmSession) {
+        State.variables.llmSession = {
+          active: false,
+          sceneContext: '',
+          lastResponse: ''
+        };
+      }
+      if (!State.variables.generatedScenes) {
+        State.variables.generatedScenes = {};
+      }
+      if (typeof State.variables.dynamicSceneId === 'undefined') {
+        State.variables.dynamicSceneId = '';
+      }
+      if (!State.variables.npcs) {
+        State.variables.npcs = {};
+      }
+      if (!State.variables.quests) {
+        State.variables.quests = {};
+      }
+      if (!State.variables.worldMemory) {
+        State.variables.worldMemory = { events: [] };
+      }
+      if (typeof State.variables.activeNPCId === 'undefined') {
+        State.variables.activeNPCId = '';
+      }
+      if (typeof State.variables.activeQuestId === 'undefined') {
+        State.variables.activeQuestId = '';
+      }
+      if (typeof State.variables.llmGatewayTarget === 'undefined') {
+        State.variables.llmGatewayTarget = '';
+      }
+    }
+  <</script>>
+<</silently>>

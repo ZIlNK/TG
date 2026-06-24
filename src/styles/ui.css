@@ -1,0 +1,167 @@
+/* UI bar, sidebar, action links, save slots */
+
+/* Action links */
+.action-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  margin: 0.5rem 0;
+  background: #2d3b2d;
+  border: 1px solid #4caf50;
+  border-left: 4px solid #4caf50;
+  border-radius: 3px;
+  color: #a5d6a7;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.action-link:hover {
+  background: #3d4f3d;
+  color: #c8e6c9;
+  text-decoration: none;
+}
+
+/* Stat bars */
+.stat-bar {
+  margin: 0.5rem 0;
+}
+
+.stat-bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: #bbbbbb;
+  margin-bottom: 0.25rem;
+}
+
+.stat-bar-track {
+  width: 100%;
+  height: 8px;
+  background: #333333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.stat-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.stat-health { background: #4caf50; }
+.stat-stamina { background: #2196f3; }
+.stat-stress { background: #ff9800; }
+.stat-trauma { background: #f44336; }
+.stat-arousal { background: #e91e63; }
+.stat-control { background: #9c27b0; }
+
+/* Sidebar sections */
+.sidebar-section {
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #333333;
+}
+
+.sidebar-section:last-child {
+  border-bottom: none;
+}
+
+.sidebar-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #888888;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.sidebar-info {
+  font-size: 0.9rem;
+  margin: 0.25rem 0;
+}
+
+/* StoryMenu in sidebar */
+#menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#menu li {
+  margin: 0.25rem 0;
+}
+
+#menu li a {
+  display: block;
+  padding: 0.4rem 0.5rem;
+  color: #cccccc;
+  text-decoration: none;
+  border-radius: 3px;
+}
+
+#menu li a:hover {
+  background: #333333;
+  color: #ffffff;
+}
+
+/* Save slots */
+.save-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.save-slot {
+  background: #2a2a2a;
+  border: 1px solid #444444;
+  border-radius: 4px;
+  padding: 0.75rem;
+}
+
+.save-slot-empty {
+  color: #777777;
+  font-style: italic;
+}
+
+.save-slot-title {
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 0.25rem;
+}
+
+.save-slot-meta {
+  font-size: 0.8rem;
+  color: #999999;
+  margin-bottom: 0.5rem;
+}
+
+.save-slot-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.save-slot-actions button {
+  flex: 1;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.85rem;
+}
+
+/* Settings page */
+.settings-section {
+  margin-bottom: 1.5rem;
+}
+
+.settings-section h2 {
+  color: #ffffff;
+  border-bottom: 1px solid #444444;
+  padding-bottom: 0.25rem;
+}
+
+.theme-buttons {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.theme-button {
+  min-width: 100px;
+}

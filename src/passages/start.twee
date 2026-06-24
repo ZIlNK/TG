@@ -1,0 +1,14 @@
+:: Start
+!欢迎来到这座城市
+
+这座城市从不入眠。显然，你也没有。
+
+你在自己的小公寓里醒来。床头柜上的电子钟显示 <<print $time.hour>>:<<print String($time.minute).padStart(2, '0')>>。外面天气<<print $world.weather>>，透过薄薄的墙壁你能感受到<<if $world.temperature gte 25>>炎热<<else>>寒意<</if>>。
+
+你的钱包里有 <<print "$" + $player.money>>。
+
+你要做什么？
+
+<<action "起床看看" "Bedroom" "开始你的一天">>
+<<action "检查随身物品" "Inventory" "看看你拥有什么">>
+<<action "打开设置" "Settings" "保存、读取或配置">>

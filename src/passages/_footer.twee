@@ -1,0 +1,9 @@
+:: PassageFooter
+<<silently>>
+  /* Auto-save hook example: trigger mod events after passage render */
+  <<script>>
+    if (typeof ModAPI !== 'undefined') {
+      ModAPI.trigger('passageEnd', { title: passage() });
+    }
+  <</script>>
+<</silently>>

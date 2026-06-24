@@ -1,0 +1,140 @@
+:: Bedroom
+<<set $location to "Bedroom">>
+!你的卧室
+
+<<sceneimg "Bedroom">>
+
+房间不大，但收拾得很整齐。靠墙摆着一张床，书桌上散落着一些笔记。阳光透过窗帘洒进来。
+
+你要做什么？
+
+<<action "睡一会儿" "SleepAction" "恢复体力，推进时间">>
+<<action "学习或工作" "StudyAction" "降低压力，消耗体力">>
+<<action "去街上" "Street" "离开公寓">>
+<<action "打开设置" "Settings" "保存、读取或配置">>
+
+:: SleepAction
+<<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 40)>>
+<<set $player.stress to Math.max(0, $player.stress - 10)>>
+<<run advanceTime(4, 0)>>
+
+你睡了几个小时。休息让你感觉好多了。
+
+<<action "醒来" "Bedroom">>
+
+:: StudyAction
+<<set $player.stamina to Math.max(0, $player.stamina - 20)>>
+<<set $player.stress to Math.max(0, $player.stress - 5)>>
+<<set $player.control to Math.min(100, $player.control + 2)>>
+<<run advanceTime(2, 0)>>
+
+你花了一些时间学习。虽然疲惫，但很有成就感。
+
+<<action "继续" "Bedroom">>
+
+:: Street
+<<set $location to "Street">>
+!城市街道
+
+<<sceneimg "Street">>
+
+街道上车水马龙，人们匆匆赶往各自的目的地。头顶的霓虹灯闪烁着，不远处飘来街头小吃的香味。
+
+<<action "去公园" "Park" "一个更安静的地方">>
+<<action "去商店" "Shop" "购买补给">>
+<<action "调查奇怪的雾" "LLMSceneDemo" "测试 LLM 场景生成">>
+<<action "回家" "Bedroom" "回到公寓">>
+
+:: Park
+<<set $location to "Park">>
+!中央公园
+
+<<sceneimg "Park">>
+
+树木沿着小径排列。长椅上坐着几个人，公园中央的喷泉汩汩作响。
+
+<<action "在长椅上休息" "RestAction" "恢复体力">>
+<<action "慢跑" "JogAction" "增强体力，消耗能量">>
+<<action "返回街道" "Street">>
+
+:: RestAction
+<<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 25)>>
+<<set $player.stress to Math.max(0, $player.stress - 15)>>
+<<run advanceTime(1, 0)>>
+
+你在长椅上休息，看着人来人往。
+
+<<action "站起来" "Park">>
+
+:: JogAction
+<<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 5)>>
+<<set $player.health to Math.min($player.maxHealth, $player.health + 3)>>
+<<set $player.stress to Math.max(0, $player.stress - 5)>>
+<<run advanceTime(1, 30)>>
+
+你绕着公园慢跑。肌肉在燃烧，但你感到更强壮了。
+
+<<action "喘口气" "Park">>
+
+:: Shop
+<<set $location to "Shop">>
+!街角小店
+
+<<sceneimg "Shop">>
+
+货架上摆满了零食、饮料和基础用品。店员在柜台后面对你点了点头。
+
+<<action "买食物（$5）" "BuyFoodAction" "恢复健康和体力">>
+<<action "浏览商品" "BrowseAction" "四处看看">>
+<<action "离开" "Street">>
+
+:: BuyFoodAction
+<<if $player.money gte 5>>
+  <<set $player.money -= 5>>
+  <<set $player.health to Math.min($player.maxHealth, $player.health + 15)>>
+  <<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 20)>>
+  <<run $player.inventory.push("零食") >>
+  你买了一份快餐，吃了起来。
+<<else>>
+  你的钱不够。
+<</if>>
+
+<<action "继续购物" "Shop">>
+
+:: BrowseAction
+你扫视着货架。今天没有什么特别吸引你的东西。
+
+<<action "离开" "Shop">>
+
+:: Inventory
+!背包
+
+你身上带着：
+
+<<if $player.inventory.length gt 0>>
+  <<for _item range $player.inventory>>
+    - <<print _item>>
+  <</for>>
+<<else>>
+  什么都没有。
+<</if>>
+
+<<action "返回" "Start">>
+
+:: About
+!关于
+
+这是一个受 *Degrees of Lewdity* 启发的 Twine + SugarCube-2 UI 原型。
+
+它展示了：
+- 场景导航
+- 侧边栏状态栏
+- 保存/读取系统
+- 设置开关
+- Mod 扩展接口
+- 动态主题切换
+- 像素艺术占位图生成
+
+所有内容均为占位内容。
+
+<<action "返回" "Start">>

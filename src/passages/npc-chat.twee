@@ -1,0 +1,34 @@
+:: NPCChat
+!与 <<print $npcs[$activeNPCId].name>> 交谈
+
+<<set _npc to $npcs[$activeNPCId]>>
+
+你正在和 <<print _npc.name>> 交谈，TA 是 <<print _npc.role>>。
+
+<<npcchat $activeNPCId>>
+
+<<action "请求任务" "LLMQuestDemo">>
+<<action "离开" "Street">>
+
+:: LLMNPCDemo
+!生成一个 NPC（LLM）
+
+在城里遇见一个新面孔。
+
+<<llmnpc "" "神秘的陌生人" "Street">>
+
+<<action "返回" "Street">>
+
+:: LLMQuestDemo
+!生成一个任务（LLM）
+
+<<if $activeNPCId neq "">>
+  <<llmquest $activeNPCId "一个只有玩家能解决的问题">>
+<<else>>
+  没有活跃的 NPC。请先生成一个 NPC。
+
+  <<action "生成 NPC" "LLMNPCDemo">>
+<</if>>
+
+<<action "返回" "NPCChat">>
+<<action "返回街道" "Street">>

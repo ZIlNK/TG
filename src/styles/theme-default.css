@@ -1,0 +1,91 @@
+/* Default dark theme (DoL-inspired) */
+
+html[data-theme="default"],
+:root {
+  --bg-body: #1a1a1a;
+  --bg-passage: #222222;
+  --bg-ui: #222222;
+  --bg-input: #333333;
+  --border-color: #333333;
+  --text-primary: #ffffff;
+  --text-secondary: #cccccc;
+  --text-muted: #888888;
+  --accent: #66bb6a;
+  --accent-hover: #81c784;
+  --danger: #f44336;
+}
+
+html[data-theme="default"] body {
+  background: var(--bg-body);
+  color: var(--text-secondary);
+}
+
+html[data-theme="default"] #ui-bar {
+  background: var(--bg-ui);
+  border-color: var(--border-color);
+}
+
+html[data-theme="default"] .passage {
+  background: var(--bg-passage);
+  border-color: var(--border-color);
+}
+
+html[data-theme="default"] .passage h1,
+html[data-theme="default"] .passage h2,
+html[data-theme="default"] .passage h3 {
+  color: var(--text-primary);
+}
+
+html[data-theme="default"] .action-link {
+  background: #2d3b2d;
+  border-color: var(--accent);
+  color: #a5d6a7;
+}
+
+html[data-theme="default"] .action-link:hover {
+  background: #3d4f3d;
+  color: var(--accent-hover);
+}
+
+html[data-theme="default"] a {
+  color: var(--accent);
+}
+
+html[data-theme="default"] a:hover {
+  color: var(--accent-hover);
+}
+
+html[data-theme="default"] button {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border-color: #555555;
+}
+
+html[data-theme="default"] button:hover {
+  background: #444444;
+}
+
+/* Widescreen mode */
+html.widescreen #passages {
+  max-width: 1100px;
+}
+
+/* No animations */
+html.no-animations * {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Passage transition */
+.passage {
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+html.no-animations .passage {
+  animation: none;
+}

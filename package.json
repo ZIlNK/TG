@@ -1,0 +1,12 @@
+{
+  "name": "text-game-ui-prototype",
+  "version": "0.1.0",
+  "description": "A Twine + SugarCube-2 scaffold inspired by Degrees of Lewdity.",
+  "private": true,
+  "scripts": {
+    "build": "build.bat"
+  },
+  "keywords": ["twine", "sugarcube", "interactive-fiction", "visual-novel"],
+  "author": "",
+  "license": "MIT"
+}

@@ -1,0 +1,122 @@
+:: Settings
+!设置
+
+<div class="settings-section">
+  <h2>保存 / 读取</h2>
+
+  <div class="save-slots">
+    <<for _slot range [0, 1, 2, 3, 4, 5, 6, 7]>>
+      <<set _info to CustomSave.getSlotInfo(_slot)>>
+      <div class="save-slot">
+        <div class="save-slot-title">栏位 <<print _slot + 1>></div>
+        <<if _info>>
+          <div class="save-slot-meta"><<print _info.title>><br><<print new Date(_info.date).toLocaleString()>></div>
+          <div class="save-slot-actions">
+            <<capture _slot>>
+              <<link "读取">>
+                <<run CustomSave.loadFromSlot(_slot)>>
+                <<goto "Start">>
+              <</link>>
+              <<link "保存">>
+                <<run CustomSave.saveToSlot(_slot)>>
+                <<goto "Settings">>
+              <</link>>
+              <<link "导出">>
+                <<run CustomSave.exportSlot(_slot)>>
+              <</link>>
+              <<link "删除">>
+                <<run CustomSave.deleteSlot(_slot)>>
+                <<goto "Settings">>
+              <</link>>
+            <</capture>>
+          </div>
+        <<else>>
+          <div class="save-slot-meta save-slot-empty">空</div>
+          <div class="save-slot-actions">
+            <<capture _slot>>
+              <<link "保存">>
+                <<run CustomSave.saveToSlot(_slot)>>
+                <<goto "Settings">>
+              <</link>>
+            <</capture>>
+          </div>
+        <</if>>
+      </div>
+    <</for>>
+  </div>
+</div>
+
+<div class="settings-section">
+  <h2>导入存档</h2>
+  <p>选择一个存档文件导入到第一个空栏位。</p>
+  <div id="import-save-container"></div>
+  <<script>>
+    (function () {
+      var container = document.getElementById('import-save-container');
+      if (!container) return;
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.json,application/json';
+      input.addEventListener('change', function (ev) {
+        var file = ev.target.files[0];
+        if (!file) return;
+        CustomSave.importFile(file, function (err, record) {
+          if (err) {
+            alert('导入失败：' + err.message);
+            return;
+          }
+          for (var i = 0; i < CustomSave.MAX_SLOTS; i++) {
+            if (!CustomSave.getSlotInfo(i)) {
+              CustomSave.importToSlot(i, record);
+              alert('存档已导入到栏位 ' + (i + 1));
+              Engine.play('Settings');
+              return;
+            }
+          }
+          alert('没有空栏位了。');
+        });
+      });
+      container.appendChild(input);
+    }());
+  <</script>>
+</div>
+
+<div class="settings-section">
+  <h2>主题</h2>
+  <p>当前主题：<strong><<print $theme>></strong></p>
+  <div class="theme-buttons">
+    <<button "默认主题">>
+      <<run ThemeEngine.setTheme("default")>>
+      <<goto "Settings">>
+    <</button>>
+    <<button "浅色主题">>
+      <<run ThemeEngine.setTheme("light")>>
+      <<goto "Settings">>
+    <</button>>
+  </div>
+</div>
+
+<div class="settings-section">
+  <h2>游戏设置</h2>
+  <p><<button "打开设置对话框">>
+    <<run Setting.open()>>
+  <</button>></p>
+</div>
+
+<div class="settings-section">
+  <h2>LLM 集成</h2>
+  <p>状态：<strong><<print $llmConfig.enabled ? "已启用" : "已禁用">></strong></p>
+  <p>提供商：<strong><<print $llmConfig.provider>></strong></p>
+  <p>模型：<strong><<print $llmConfig.model>></strong></p>
+  <div class="theme-buttons">
+    <<button "打开 LLM 配置">>
+      <<goto "LLMConfig">>
+    <</button>>
+    <<button "清空 LLM 历史">>
+      <<run PromptBuilder.clearHistory()>>
+      <<goto "Settings">>
+    <</button>>
+  </div>
+</div>
+
+<<action "返回" "Start">>

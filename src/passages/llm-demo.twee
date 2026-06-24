@@ -1,0 +1,36 @@
+:: LLMConfig
+!LLM 配置
+
+在这里配置你的大语言模型连接。你可以使用本地 Ollama 实例或任何兼容 OpenAI 的 API。
+
+<<llmconfig>>
+
+<<action "返回" "Settings">>
+
+:: LLMSceneDemo
+!动态场景（LLM）
+
+<<set $llmSession.sceneContext to "一团神秘的雾卷入了城市街道，你几乎看不见自己的手。">>
+
+<<llmscene2 "Street" "eerie" "一团神秘的雾卷入了城市街道，你几乎看不见自己的手。">>
+
+<<action "返回" "Street">>
+<<action "和某人交谈" "LLMChatDemo">>
+
+:: LLMChatDemo
+!自由对话（LLM）
+
+你可以在这里自由发言。叙述者会根据你当前的情境做出回应。
+
+<<llmchat "你身处城市街道上的奇怪雾气中。玩家可以提问、描述动作，或与看不见的身影交谈。">>
+
+<<action "返回街道" "Street">>
+
+:: LLMOptionsDemo
+!动态选项（LLM）
+
+城市提供了许多可能性。你要做什么？
+
+<<llmoptions "你在城市里，有几小时的空闲时间。" 4>>
+
+<<action "返回" "Street">>

@@ -1,0 +1,42 @@
+:: Mod Test
+!Mod 扩展测试
+
+本页面演示 ModAPI 接口。你可以加载一个示例 mod，它会注入样式并注册钩子。
+
+<<button "加载示例 Mod">>
+  <<script>>
+    ModAPI.loadModData({
+      name: '示例 Mod',
+      version: '1.0.0',
+      author: '测试者',
+      css: '#ui-bar { border-right: 4px solid #4caf50 !important; }',
+      hooks: {
+        passageStart: function () {
+          console.log('[示例 Mod] passage 开始');
+        }
+      }
+    });
+  <</script>>
+  <<goto "Mod Test">>
+<</button>>
+
+<<button "显示已加载 Mod">>
+  <<script>>
+    var mods = ModAPI.getLoadedMods();
+    alert('已加载 Mod：' + (mods.length ? mods.map(function (m) { return m.name; }).join(', ') : '无'));
+  <</script>>
+<</button>>
+
+<<button "卸载示例样式">>
+  <<script>>
+    document.querySelectorAll('style[data-mod-style]').forEach(function (el) {
+      el.remove();
+    });
+  <</script>>
+<</button>>
+
+<div class="mt-2">
+  已加载 Mod 数量：<strong><<print $modRegistry.length>></strong>
+</div>
+
+<<action "返回" "Settings">>
