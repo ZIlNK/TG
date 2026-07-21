@@ -335,6 +335,35 @@
       }
     }
 
+    // Process skill XP from effects
+    if (effects.skills && typeof effects.skills === 'object') {
+      for (var sk in effects.skills) {
+        if (effects.skills.hasOwnProperty(sk) && typeof effects.skills[sk] === 'number') {
+          var gained = addSkillXP(sk, effects.skills[sk]);
+          if (gained > 0) msgs.push(sk + ' 技能提升！');
+        }
+      }
+    }
+
+    // Process relationship changes from effects
+    if (effects.relationship_change && typeof effects.relationship_change === 'object') {
+      var rc = effects.relationship_change;
+      var npcId = rc.npcId;
+      if (npcId && State.variables.npcs && State.variables.npcs[npcId]) {
+        var rcNpc = State.variables.npcs[npcId];
+        var delta = typeof rc.delta === 'number' ? rc.delta : 0;
+        if (delta !== 0) {
+          rcNpc.disposition = Math.max(-10, Math.min(10, (rcNpc.disposition || 0) + (delta > 0 ? 1 : -1)));
+          if (!rcNpc.relationship) {
+            rcNpc.relationship = { tier: '陌生人', value: 0, history: [], lastMetDay: 1, meetCount: 1 };
+          }
+          rcNpc.relationship.value = Math.max(0, Math.min(100, (rcNpc.relationship.value || 0) + delta));
+          if (typeof updateRelationshipTier === 'function') updateRelationshipTier(rcNpc);
+          msgs.push(rcNpc.name + ' 的关系值 ' + (delta > 0 ? '+' : '') + delta);
+        }
+      }
+    }
+
     checkStatThresholds();
     showFeedback(msgs);
     checkGameOver();
