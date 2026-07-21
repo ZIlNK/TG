@@ -86,6 +86,9 @@
 <<action "去公园" "Park" "一个更安静的地方">>
 <<action "去商店" "Shop" "购买补给">>
 <<action "回家" "Bedroom" "回到公寓">>
+<<if getSkillLevel("运动") gte 20>>
+  <<action "快速逃离" "FastEscape" "利用敏捷身法快速离开险境">>
+<</if>>
 
 :: Park
 <<set $location to "Park">>
@@ -106,6 +109,9 @@
 <<action "在长椅上休息" "RestAction" "恢复体力">>
 <<action "慢跑" "JogAction" "增强体力，消耗能量">>
 <<action "返回街道" "Street">>
+<<if getSkillLevel("感知") gte 15>>
+  <<action "观察自然" "ObserveNature" "训练你的感知能力">>
+<</if>>
 
 :: RestAction
 <<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 25)>>
@@ -141,6 +147,31 @@
 <<set $player.dailyActions += 1>>
 
 <<action "喘口气" "Park">>
+
+:: FastEscape
+!快速逃离
+
+你利用敏捷的身法快速穿过人群，甩掉了任何可能的跟踪。
+
+<<set $player.stamina to Math.max(0, $player.stamina - 15)>>
+<<run addSkillXP("运动", 5)>>
+<<run advanceTime(0, 15)>>
+<<run showFeedback(["体力 -15", "运动 +5", "时间推进 15分钟"])>>
+
+<<action "停下脚步" "Street">>
+
+:: ObserveNature
+!观察自然
+
+你静下心来观察周围的细节——树叶的沙沙声、远处的流水。世界在你眼前展开。
+
+<<set $player.stress to Math.max(0, $player.stress - 8)>>
+<<set $player.control to Math.min(100, $player.control + 3)>>
+<<run addSkillXP("感知", 8)>>
+<<run advanceTime(0, 30)>>
+<<run showFeedback(["压力 -8", "自控 +3", "感知 +8", "时间推进 30分钟"])>>
+
+<<action "离开" "Park">>
 
 :: Shop
 <<set $location to "Shop">>
