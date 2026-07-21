@@ -5,11 +5,13 @@
 <<set _traumaPct to Math.max(0, Math.min(100, $player.trauma))>>
 <<set _arousalPct to Math.max(0, Math.min(100, $player.arousal))>>
 <<set _controlPct to Math.max(0, Math.min(100, $player.control))>>
+<<set _hungerPct to Math.max(0, Math.min(100, $player.hunger))>>
 
 <div class="sidebar-section">
   <div class="sidebar-title">状态</div>
   <div class="sidebar-info"><strong><<print $player.name>></strong></div>
-  <div class="sidebar-info">$<<print $player.money>></div>
+  <div class="sidebar-info">$<<print $player.money>> · 声望 <<print $player.reputation>></div>
+  <div class="sidebar-info">行动 <<print $player.dailyActions>>/<<print $player.maxDailyActions>></div>
 </div>
 
 <div class="sidebar-section">
@@ -23,6 +25,16 @@
   <div class="sidebar-title">位置</div>
   <div class="sidebar-info"><<print $location>></div>
 </div>
+
+<<if $worldMemory && $worldMemory.events && $worldMemory.events.length gt 0>>
+<div class="sidebar-section">
+  <div class="sidebar-title">动态</div>
+  <<set _evs to $worldMemory.events.slice(-2)>>
+  <<for _ev range _evs>>
+  <div class="sidebar-info">· <<print _ev.text>></div>
+  <</for>>
+</div>
+<</if>>
 
 <div class="sidebar-section">
   <div class="sidebar-title">属性</div>
@@ -56,6 +68,11 @@
     <div class="stat-bar-label"><span>自控</span><span><<print $player.control>>%</span></div>
     <div class="stat-bar-track"><div class="stat-bar-fill stat-control" @style="'width: ' + _controlPct + '%;'"></div></div>
   </div>
+
+  <div class="stat-bar">
+    <div class="stat-bar-label"><span>饥饿</span><span><<print $player.hunger>>%</span></div>
+    <div class="stat-bar-track"><div class="stat-bar-fill stat-hunger" @style="'width: ' + _hungerPct + '%;'"></div></div>
+  </div>
 </div>
 
 <div class="sidebar-section">
@@ -63,3 +80,20 @@
   <div class="sidebar-info">v<<print $game.version>></div>
   <div class="sidebar-info">难度：<<print $game.difficulty>></div>
 </div>
+
+<<if $player.skills>>
+<<set _topSkills to getTopSkills(3)>>
+<<if _topSkills.length gt 0>>
+<div class="sidebar-section">
+  <div class="sidebar-title">擅长技能</div>
+  <<for _skill range _topSkills>>
+    <<set _skillPct to Math.round((_skill.value / 100) * 100)>>
+    <<set _xpPct to Math.round(getSkillProgress(_skill.name) * 100)>>
+    <div class="stat-bar">
+      <div class="stat-bar-label"><span><<_skill.name>></span><span><<_skill.value>>/100</span></div>
+      <div class="stat-bar-track"><div class="stat-bar-fill stat-skill" @style="'width: ' + _skillPct + '%;'"></div></div>
+    </div>
+  <</for>>
+</div>
+<</if>>
+<</if>>
