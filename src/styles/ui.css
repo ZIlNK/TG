@@ -83,6 +83,26 @@
   background: linear-gradient(90deg, #a78bfa, #7c3aed);
 }
 
+.stat-bar-fill.stat-relationship {
+  background: linear-gradient(90deg, #f59e0b, #ef4444);
+}
+
+.npc-relationship-badge {
+  margin: 8px 0;
+  padding: 8px;
+  background: var(--bg-secondary, #1e1e2e);
+  border-radius: 6px;
+}
+
+.npc-rel-tier {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.85em;
+  background: var(--accent, #7c3aed);
+  color: white;
+}
+
 /* Sidebar sections */
 .sidebar-section {
   margin-bottom: 16px;
