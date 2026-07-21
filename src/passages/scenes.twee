@@ -4,9 +4,9 @@
 
 <<sceneimg "Bedroom">>
 
-房间不大，但收拾得很整齐。靠墙摆着一张床，书桌上散落着一些笔记。阳光透过窗帘洒进来。
+<<hubscene "Bedroom" "calm" "不大但整洁的卧室，靠墙一张床，书桌上散落着笔记，阳光透过窗帘">>
 
-你要做什么？
+你也可以：
 
 <<action "睡一会儿" "SleepAction" "恢复体力，推进时间">>
 <<action "学习或工作" "StudyAction" "降低压力，消耗体力">>
@@ -14,35 +14,77 @@
 <<action "打开设置" "Settings" "保存、读取或配置">>
 
 :: SleepAction
-<<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 40)>>
-<<set $player.stress to Math.max(0, $player.stress - 10)>>
-<<run advanceTime(4, 0)>>
+<<if $player.stamina gte 90>>
+  你还不困，躺在床上翻来覆去。
 
-你睡了几个小时。休息让你感觉好多了。
+  <<action "返回" "Bedroom">>
+<<else>>
+  <<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 40)>>
+  <<set $player.stress to Math.max(0, $player.stress - 10)>>
+  <<set $player.hunger to Math.min(100, $player.hunger + 10)>>
+  <<run addSkillXP("意志", 3)>>
+  <<run advanceTime(4, 0)>>
+  <<run completeTutorialObjective(0)>>
+  <<run showFeedback(["体力 +40", "压力 -10", "饥饿 +10", "时间推进 4小时0分"])>>
 
-<<action "醒来" "Bedroom">>
+  你睡了几个小时。休息让你感觉好多了，但肚子有点饿。
+
+  <<action "醒来" "Bedroom">>
+<</if>>
 
 :: StudyAction
-<<set $player.stamina to Math.max(0, $player.stamina - 20)>>
-<<set $player.stress to Math.max(0, $player.stress - 5)>>
-<<set $player.control to Math.min(100, $player.control + 2)>>
-<<run advanceTime(2, 0)>>
+<<if $player.stress gt 70>>
+  你压力太大，无法集中注意力。
 
-你花了一些时间学习。虽然疲惫，但很有成就感。
+  <<action "返回" "Bedroom">>
+<<elseif $player.stamina lt 25>>
+  你太累了，无法学习。
 
-<<action "继续" "Bedroom">>
+  <<action "返回" "Bedroom">>
+<<else>>
+  <<set _diffMod to getDifficultyModifier()>>
+  <<set _feedbackMsgs to ["体力 -20", "压力 -5", "自控 +2"]>>
+  <<set $player.stamina to Math.max(0, $player.stamina - 20)>>
+  <<set $player.stress to Math.max(0, $player.stress - 5)>>
+  <<set $player.control to Math.min(100, $player.control + 2)>>
+  <<set _studyReward to random(1, 10)>>
+  <<if _studyReward * _diffMod.moneyGain gte 8>>
+    <<set _studyMoney to Math.max(1, Math.round(5 * _diffMod.moneyGain))>>
+    <<set $player.money += _studyMoney>>
+    <<set $player.reputation += 1>>
+    <<run _feedbackMsgs.push("金钱 +" + _studyMoney)>>
+    <<run _feedbackMsgs.push("声望 +1")>>
+    你完成了一份在线兼职，赚了 $<<print _studyMoney>>，声望 +1。
+  <</if>>
+  <<run addSkillXP("学识", 8)>>
+  <<run advanceTime(2, 0)>>
+  <<set $player.dailyActions += 1>>
+  <<run showFeedback(_feedbackMsgs)>>
+
+  你花了一些时间学习。虽然疲惫，但很有成就感。
+
+  <<action "继续" "Bedroom">>
+<</if>>
 
 :: Street
 <<set $location to "Street">>
+<<run completeTutorialObjective(1)>>
 !城市街道
 
 <<sceneimg "Street">>
 
-街道上车水马龙，人们匆匆赶往各自的目的地。头顶的霓虹灯闪烁着，不远处飘来街头小吃的香味。
+<<if $time.hour gte 22 or $time.hour lt 6>>
+  <<hubscene "Street" "dangerous" "深夜的街道，阴影中传来可疑的声响，醉汉在巷口徘徊">>
+<<elseif $time.hour gte 18>>
+  <<hubscene "Street" "lively" "傍晚的街道，霓虹灯刚刚亮起，人群熙熙攘攘">>
+<<else>>
+  <<hubscene "Street" "neutral" "车水马龙的城市街道，霓虹灯闪烁，远处飘来街头小吃的香味">>
+<</if>>
+
+你也可以：
 
 <<action "去公园" "Park" "一个更安静的地方">>
 <<action "去商店" "Shop" "购买补给">>
-<<action "调查奇怪的雾" "LLMSceneDemo" "测试 LLM 场景生成">>
 <<action "回家" "Bedroom" "回到公寓">>
 
 :: Park
@@ -51,7 +93,15 @@
 
 <<sceneimg "Park">>
 
-树木沿着小径排列。长椅上坐着几个人，公园中央的喷泉汩汩作响。
+<<if $time.hour gte 22 or $time.hour lt 6>>
+  <<hubscene "Park" "eerie" "夜晚的公园，喷泉停止涌动，树影在风中摇曳，偶尔有夜行动物穿过灌木">>
+<<elseif $time.hour gte 18>>
+  <<hubscene "Park" "romantic" "黄昏的公园，路灯一盏盏亮起，情侣和慢跑者共享渐暗的天光">>
+<<else>>
+  <<hubscene "Park" "peaceful" "树木沿小径排列，长椅上坐着几个人，公园中央的喷泉汩汩作响">>
+<</if>>
+
+你也可以：
 
 <<action "在长椅上休息" "RestAction" "恢复体力">>
 <<action "慢跑" "JogAction" "增强体力，消耗能量">>
@@ -60,19 +110,35 @@
 :: RestAction
 <<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 25)>>
 <<set $player.stress to Math.max(0, $player.stress - 15)>>
+<<set $player.hunger to Math.min(100, $player.hunger + 5)>>
+<<run addSkillXP("意志", 2)>>
 <<run advanceTime(1, 0)>>
+<<set $player.dailyActions += 1>>
+<<run showFeedback(["体力 +25", "压力 -15", "饥饿 +5", "时间推进 1小时0分"])>>
 
 你在长椅上休息，看着人来人往。
 
 <<action "站起来" "Park">>
 
 :: JogAction
-<<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 5)>>
-<<set $player.health to Math.min($player.maxHealth, $player.health + 3)>>
-<<set $player.stress to Math.max(0, $player.stress - 5)>>
+<<if $player.stamina lt 30>>
+  <<set $player.health to Math.max(0, $player.health - 5)>>
+  <<set $player.trauma to Math.min(100, $player.trauma + 3)>>
+  <<run addSkillXP("运动", 2)>>
+  <<run showFeedback(["健康 -5", "创伤 +3", "饥饿 +8", "时间推进 1小时30分"])>>
+  你太累了，跑步时扭伤了脚踝。健康 -5，创伤 +3。
+<<else>>
+  <<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 5)>>
+  <<set $player.health to Math.min($player.maxHealth, $player.health + 3)>>
+  <<set $player.stress to Math.max(0, $player.stress - 5)>>
+  <<set $player.allure to Math.min(100, $player.allure + 1)>>
+  <<run addSkillXP("运动", 10)>>
+  <<run showFeedback(["体力 +5", "健康 +3", "压力 -5", "魅力 +1", "饥饿 +8", "时间推进 1小时30分"])>>
+  你绕着公园慢跑。肌肉在燃烧，但你感到更强壮了。
+<</if>>
+<<set $player.hunger to Math.min(100, $player.hunger + 8)>>
 <<run advanceTime(1, 30)>>
-
-你绕着公园慢跑。肌肉在燃烧，但你感到更强壮了。
+<<set $player.dailyActions += 1>>
 
 <<action "喘口气" "Park">>
 
@@ -82,7 +148,15 @@
 
 <<sceneimg "Shop">>
 
-货架上摆满了零食、饮料和基础用品。店员在柜台后面对你点了点头。
+<<if $time.hour gte 22 or $time.hour lt 6>>
+  <<hubscene "Shop" "closed" "小店已经拉下铁门，橱窗里只剩一盏昏暗的灯">>
+<<elseif $time.hour gte 18>>
+  <<hubscene "Shop" "busy" "下班高峰，店员忙着结账，货架被挑得有些凌乱">>
+<<else>>
+  <<hubscene "Shop" "mundane" "货架上摆满零食、饮料和基础用品，店员在柜台后点头致意">>
+<</if>>
+
+你也可以：
 
 <<action "买食物（$5）" "BuyFoodAction" "恢复健康和体力">>
 <<action "浏览商品" "BrowseAction" "四处看看">>
@@ -93,9 +167,14 @@
   <<set $player.money -= 5>>
   <<set $player.health to Math.min($player.maxHealth, $player.health + 15)>>
   <<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 20)>>
-  <<run $player.inventory.push("零食") >>
-  你买了一份快餐，吃了起来。
+  <<run addSkillXP("社交", 4)>>
+  <<set $player.hunger to Math.max(0, $player.hunger - 30)>>
+  <<run addToInventory("零食", 1)>>
+  <<run completeTutorialObjective(2)>>
+  <<run showFeedback(["健康 +15", "体力 +20", "饥饿 -30", "金钱 -5", "获得零食 x1"])>>
+  你买了一份快餐，吃了起来。饥饿感减轻了。
 <<else>>
+  <<run showFeedback(["金钱不足"])>>
   你的钱不够。
 <</if>>
 
@@ -111,13 +190,7 @@
 
 你身上带着：
 
-<<if $player.inventory.length gt 0>>
-  <<for _item range $player.inventory>>
-    - <<print _item>>
-  <</for>>
-<<else>>
-  什么都没有。
-<</if>>
+<<print formatInventory()>>
 
 <<action "返回" "Start">>
 
@@ -138,3 +211,66 @@
 所有内容均为占位内容。
 
 <<action "返回" "Start">>
+
+:: DayReset
+!新的一天
+
+阳光（或雨声）提醒你，第 <<print $time.day>> 天开始了。
+
+天气 <<print $world.weather>>，温度 <<print $world.temperature>>°C。
+
+你感觉饥饿又找上门来。
+
+<<action "起床" "Bedroom">>
+
+:: GameOver
+!游戏结束
+
+<<if $game.overReason neq "">>
+  <<print $game.overReason>>
+<<else>>
+  你无法再继续下去了。
+<</if>>
+
+这座城市还在运转，但你的故事暂时画上了句号。
+
+<<link "重新开始">>
+  <<set $player = {
+    name: "Player",
+    health: 100,
+    maxHealth: 100,
+    stamina: 80,
+    maxStamina: 80,
+    stress: 10,
+    trauma: 0,
+    money: 25,
+    arousal: 0,
+    control: 100,
+    allure: 15,
+    hunger: 0,
+    reputation: 0,
+    dailyActions: 0,
+    maxDailyActions: 8,
+    inventory: []
+  }>>
+  <<set $time = { hour: 8, minute: 0, day: 1, dayName: "Monday" }>>
+  <<set $world = { weather: "clear", temperature: 22 }>>
+  <<set $location to "Bedroom">>
+  <<set $quests = {} >>
+  <<set $activeQuestId to "" >>
+  <<set $npcs = {} >>
+  <<set $activeNPCId to "" >>
+  <<set $worldMemory = { events: [] } >>
+  <<set $llmHistory = [] >>
+  <<set $llmSession = { active: false, sceneContext: "", lastResponse: "" } >>
+  <<set $generatedScenes = {} >>
+  <<set $dynamicSceneId to "" >>
+  <<set $game.started to true >>
+  <<set $game.tutorialComplete to false >>
+  <<set $game.over to false >>
+  <<set $game.overReason to "" >>
+  <<set $game.rentPaid to false >>
+  <<set $game.evicted to false >>
+  <<set $game.rentDueDay to 7 >>
+  <<goto "Start">>
+<</link>>
