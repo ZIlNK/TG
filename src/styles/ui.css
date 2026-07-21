@@ -265,3 +265,49 @@
 .tutorial-hint strong {
   color: var(--success, #62d178);
 }
+
+/* Character page */
+.character-section {
+  margin: 12px 0;
+}
+.skill-detail-row, .npc-rel-card {
+  margin: 8px 0;
+  padding: 8px;
+  background: var(--bg-secondary, #1e1e2e);
+  border-radius: 6px;
+}
+.skill-detail-header, .npc-rel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.skill-xp-bar {
+  margin-top: 2px;
+}
+.stat-bar-fill.stat-xp {
+  background: linear-gradient(90deg, #6ee7b7, #10b981);
+  height: 4px;
+}
+.npc-rel-tier-badge {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 0.8em;
+  background: var(--accent, #7c3aed);
+  color: white;
+  margin: 0 4px;
+}
+.npc-rel-meta {
+  font-size: 0.85em;
+  color: var(--text-secondary, #888);
+  margin-top: 4px;
+}
+.stat-row {
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border-color, #333);
+}
+.empty-state {
+  color: var(--text-secondary, #888);
+  font-style: italic;
+}
