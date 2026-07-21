@@ -11,7 +11,20 @@
   arousal: 0,
   control: 100,
   allure: 15,
-  inventory: []
+  hunger: 0,
+  reputation: 0,
+  dailyActions: 0,
+  maxDailyActions: 8,
+  inventory: [],
+  skills: {
+    运动: { value: 0, xp: 0 },
+    学识: { value: 0, xp: 0 },
+    社交: { value: 0, xp: 0 },
+    潜行: { value: 0, xp: 0 },
+    感知: { value: 0, xp: 0 },
+    意志: { value: 0, xp: 0 },
+    魅力: { value: 0, xp: 0 }
+  }
 }>>
 <<set $time = {
   hour: 8,
@@ -24,9 +37,16 @@
   version: "0.1.0",
   started: true,
   cheats: false,
-  difficulty: "normal"
+  difficulty: "normal",
+  tutorialComplete: false,
+  over: false,
+  overReason: "",
+  rentDueDay: 7,
+  rentAmount: 50,
+  rentPaid: false,
+  evicted: false
 }>>
-<<set $theme = "default">>
+<<set $theme = "">>
 <<set $world = {
   weather: "clear",
   temperature: 22
@@ -34,7 +54,7 @@
 <<set $modRegistry = []>>
 <<set $debug = false>>
 <<set $llmConfig = {
-  enabled: false,
+  enabled: true,
   provider: "ollama",
   endpoint: "http://localhost:11434",
   model: "llama3.2",

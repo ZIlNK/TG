@@ -13,7 +13,7 @@
     if (typeof State !== 'undefined' && State.variables) {
       if (!State.variables.llmConfig) {
         State.variables.llmConfig = {
-          enabled: false,
+          enabled: true,
           provider: 'ollama',
           endpoint: 'http://localhost:11434',
           model: 'llama3.2',
@@ -55,6 +55,38 @@
       }
       if (typeof State.variables.llmGatewayTarget === 'undefined') {
         State.variables.llmGatewayTarget = '';
+      }
+
+      // Playability patch: ensure new $game fields exist in older saves.
+      if (State.variables.game) {
+        if (typeof State.variables.game.tutorialComplete === 'undefined') State.variables.game.tutorialComplete = false;
+        if (typeof State.variables.game.over === 'undefined') State.variables.game.over = false;
+        if (typeof State.variables.game.overReason === 'undefined') State.variables.game.overReason = '';
+        if (typeof State.variables.game.rentDueDay === 'undefined') State.variables.game.rentDueDay = 7;
+        if (typeof State.variables.game.rentAmount === 'undefined') State.variables.game.rentAmount = 50;
+        if (typeof State.variables.game.rentPaid === 'undefined') State.variables.game.rentPaid = false;
+        if (typeof State.variables.game.evicted === 'undefined') State.variables.game.evicted = false;
+      }
+
+      // Skill system compat: initialize skills on older saves.
+      if (State.variables.player && !State.variables.player.skills) {
+        State.variables.player.skills = {
+          运动: { value: 0, xp: 0 },
+          学识: { value: 0, xp: 0 },
+          社交: { value: 0, xp: 0 },
+          潜行: { value: 0, xp: 0 },
+          感知: { value: 0, xp: 0 },
+          意志: { value: 0, xp: 0 },
+          魅力: { value: 0, xp: 0 }
+        };
+      }
+      // Item catalog placeholder for future consumable system.
+      if (!State.variables.itemCatalog) {
+        State.variables.itemCatalog = {
+          '能量饮料': { type: 'consumable', effects: { stamina: 30, stress: 5 }, desc: '恢复大量体力，但略微增加压力' },
+          '零食': { type: 'consumable', effects: { hunger: -20, health: 5 }, desc: '小零食，缓解饥饿' },
+          '止痛药': { type: 'consumable', effects: { health: 20, stress: -5 }, desc: '恢复健康，放松心情' }
+        };
       }
     }
   <</script>>
