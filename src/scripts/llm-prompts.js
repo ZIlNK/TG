@@ -8,13 +8,36 @@
 
   function formatPlayer(stats) {
     if (!stats) return '未知角色。';
+    var invText;
+    if (typeof formatInventory === 'function') {
+      invText = formatInventory();
+    } else if (stats.inventory) {
+      if (Array.isArray(stats.inventory)) {
+        invText = stats.inventory.join('、') || '空';
+      } else {
+        var parts = [];
+        for (var k in stats.inventory) {
+          if (stats.inventory.hasOwnProperty(k)) parts.push(k + ' x' + stats.inventory[k]);
+        }
+        invText = parts.join('、') || '空';
+      }
+    } else {
+      invText = '空';
+    }
     var lines = [
       '姓名：' + (stats.name || '玩家'),
       '生命：' + stats.health + '/' + stats.maxHealth,
       '体力：' + stats.stamina + '/' + stats.maxStamina,
       '压力：' + stats.stress,
-      '金钱：' + stats.money + ' 元',
-      '背包：' + (stats.inventory && stats.inventory.length ? stats.inventory.join('、') : '空')
+      '创伤：' + (stats.trauma || 0),
+      '欲望：' + (stats.arousal || 0),
+      '自控：' + (stats.control || 100),
+      '魅力：' + (stats.allure || 0),
+      '金钱：$' + stats.money,
+      '饥饿：' + (stats.hunger || 0) + '/100',
+      '声望：' + (stats.reputation || 0),
+      '今日行动：' + (stats.dailyActions || 0) + '/' + (stats.maxDailyActions || 8),
+      '背包：' + invText
     ];
     return lines.join('\n');
   }
@@ -41,6 +64,7 @@
       '保持简洁（2-4 段）。',
       '不要打破角色，也不要提及自己是 AI。',
       '请尊重游戏世界和玩家状态来叙事。',
+      '当前难度：' + ((st.game && st.game.difficulty) || 'normal') + '。',
       '',
       '=== 当前游戏状态 ===',
       '地点：' + formatLocation(st.location),
@@ -50,12 +74,55 @@
       formatPlayer(st.player)
     ];
 
+    // Active quest context
+    if (st.activeQuestId && st.quests && st.quests[st.activeQuestId]) {
+      var q = st.quests[st.activeQuestId];
+      lines.push('', '=== 当前任务 ===');
+      lines.push('任务：' + q.title);
+      lines.push('描述：' + q.description);
+      if (q.objectives && q.objectives.length) {
+        lines.push('目标：');
+        q.objectives.forEach(function (o) {
+          lines.push('- ' + (o.completed ? '[已完成] ' : '[未完成] ') + o.text);
+        });
+      }
+    }
+
+    // NPCs in current location
+    var localNPCs = [];
+    if (st.npcs) {
+      for (var id in st.npcs) {
+        if (!st.npcs.hasOwnProperty(id)) continue;
+        var npc = st.npcs[id];
+        if (npc.location === st.location) {
+          localNPCs.push(npc.name + '（' + npc.role + '，态度：' + (npc.disposition || 0) + '）');
+        }
+      }
+    }
+    if (localNPCs.length > 0) {
+      lines.push('', '=== 此地的 NPC ===');
+      localNPCs.forEach(function (n) { lines.push('- ' + n); });
+    }
+
     var worldMemory = st.worldMemory;
     if (worldMemory && worldMemory.events && worldMemory.events.length > 0) {
       var recentEvents = worldMemory.events.slice(-5);
       lines.push('', '=== 近期世界事件 ===');
       recentEvents.forEach(function (ev) {
         lines.push('- ' + (ev.text || '未知事件'));
+      });
+    }
+
+    // Player skills context
+    if (st.player && st.player.skills) {
+      lines.push('', '=== 玩家技能 ===');
+      var skillNames = ['运动','学识','社交','潜行','感知','意志','魅力'];
+      skillNames.forEach(function (sk) {
+        var sv = st.player.skills[sk];
+        if (sv) {
+          var desc = sv.value >= 80 ? '大师' : sv.value >= 60 ? '精通' : sv.value >= 40 ? '熟练' : sv.value >= 20 ? '练习中' : '生疏';
+          lines.push('- ' + sk + '：' + sv.value + '/100（' + desc + '）');
+        }
       });
     }
 
@@ -139,22 +206,6 @@
       return messages;
     },
 
-    actionPrompt: function (actionDef) {
-      var st = getState();
-      actionDef = actionDef || {};
-      var parts = [
-        buildSystemPrompt(),
-        '',
-        '=== 玩家行动 ===',
-        '行动：' + (actionDef.action || '做点什么'),
-        '目标：' + (actionDef.target || '环境'),
-        '意图：' + (actionDef.intent || '探索'),
-        '',
-        '请用中文描述这个行动的结果（1-2 段）。具体说明它对玩家和世界的影响。'
-      ];
-      return parts.join('\n');
-    },
-
     sceneObjectPrompt: function (sceneDef) {
       var st = getState();
       sceneDef = sceneDef || {};
@@ -171,6 +222,7 @@
         '请生成一个场景对象，格式为 JSON。场景必须包含 2-4 个有意义的玩家选项。',
         '每个选项需要包含 "label"（短文本）、"target"（passage 名称，如 "Bedroom"、"Street"、"Park"、"Shop"，或 "llm:generate:内容" 来让 LLM 生成更多内容）和可选的 "tooltip"。',
         '如果玩家想去上面未列出的地方，请使用 "llm:generate:<地点名>" 作为 target。',
+        '如果某个选项会对玩家状态产生机械影响，请在 "effects" 对象中说明。例如：{"health": -5, "money": 10} 表示选择后健康减 5、金钱加 10。',
         '',
         '必需的 JSON  schema（请用中文填写文本内容，JSON 字段名保持英文）：',
         '{',
@@ -180,9 +232,12 @@
         '  "mood": "string",',
         '  "text": "string（2-4 段叙事，中文）",',
         '  "options": [',
-        '    { "label": "string（中文）", "target": "string", "tooltip": "string（中文）" }',
+        '    { "label": "string（中文）", "target": "string", "tooltip": "string（中文）", "effects": { "health": number, "stamina": number, "stress": number, "money": number, "hunger": number, "trauma": number, "control": number, "arousal": number, "allure": number, "reputation": number, "items": [{"name": "string", "qty": number}], "questObjective": number, "npcDisposition": number, "timeAdvance": [hours, minutes] } }',
         '  ]',
         '}',
+        '',
+        '如果选项涉及技能运用，请在 effects.skills 中指定技能经验值。',
+        '支持的技能：运动、学识、社交、潜行、感知、意志、魅力',
         '',
         '请只返回合法 JSON。不要包含 markdown 代码块或评论。所有自然语言内容必须是中文。'
       ];
@@ -206,11 +261,15 @@
         '请生成恰好 ' + count + ' 个玩家选项。',
         '',
         '每个选项需要包含 "label"（短文本，中文）、"target"（passage 名称，如 "Bedroom"、"Street"、"Park"、"Shop"，或 "llm:generate:内容"）和可选的 "tooltip"（中文）。',
+        '如果某个选项会对玩家状态产生机械影响，请在 "effects" 对象中说明。例如：{"health": -5, "money": 10, "timeAdvance": [1, 0]} 表示选择后健康减 5、金钱加 10、时间推进 1 小时。',
         '',
         '必需的 JSON schema（只返回数组，中文内容）：',
         '[',
-        '  { "label": "string（中文）", "target": "string", "tooltip": "string（中文）" }',
+        '  { "label": "string（中文）", "target": "string", "tooltip": "string（中文）", "effects": { "health": number, "stamina": number, "stress": number, "money": number, "hunger": number, "trauma": number, "control": number, "arousal": number, "allure": number, "reputation": number, "items": [{"name": "string", "qty": number}], "questObjective": number, "npcDisposition": number, "timeAdvance": [hours, minutes] } }',
         ']',
+        '',
+        '如果选项涉及技能运用，请在 effects.skills 中指定经验值。',
+        '例如：{"label": "奋力奔跑", "effects": {"stamina": -10, "skills": {"运动": 5}}}',
         '',
         '请只返回合法 JSON。不要包含 markdown 代码块或评论。所有自然语言内容必须是中文。'
       ];
@@ -229,6 +288,7 @@
         '姓名提示：' + (npcDef.name || '任何合适的名字'),
         '角色：' + (npcDef.role || '普通市民'),
         '地点：' + (npcDef.location || st.location || '未知'),
+        'NPC 的 disposition（-10 敌对 到 10 友好）应参考玩家当前状态：如果玩家声望高、自控高、魅力高，倾向生成友好 NPC；如果玩家创伤高、压力高、名声差，NPC 可能更警惕或敌对。',
         '',
         '必需的 JSON schema（中文内容）：',
         '{',
@@ -273,6 +333,25 @@
         '=========================='
       ].join('\n');
 
+      // Append relationship context to NPC system prompt
+      if (npc.relationship) {
+        var relLines = [
+          '',
+          '=== 与玩家的关系 ===',
+          '当前关系：' + (npc.relationship.tier || '陌生人') + '（' + (npc.relationship.value || 0) + '/100）',
+          '上次见面：第 ' + (npc.relationship.lastMetDay || 1) + ' 天',
+          '总共见面：' + (npc.relationship.meetCount || 1) + ' 次'
+        ];
+        if (npc.relationship.history && npc.relationship.history.length > 0) {
+          var recent = npc.relationship.history.slice(-3);
+          relLines.push('近期互动：');
+          recent.forEach(function (h) {
+            relLines.push('- ' + (h.action || '互动') + '（关系 ' + (h.delta > 0 ? '+' : '') + h.delta + '）');
+          });
+        }
+        system += '\n\n' + relLines.join('\n');
+      }
+
       var messages = [
         { role: 'system', content: system }
       ];
@@ -300,6 +379,8 @@
         '=== 生成任务 ===',
         '任务发布者：' + giver.name + '（' + giver.role + '）',
         '主题：' + (questDef.theme || '一个当地的问题'),
+        '任务目标应具体且可验证（例如：前往某个地点、与某 NPC 交谈、获取某物品）。',
+        'rewards 数组中的每个元素应为 "类型 数值" 格式，如 "金钱 50"、"声望 5"、"物品 能量饮料"、"健康 10"。',
         '',
         '必需的 JSON schema（中文内容）：',
         '{',
@@ -331,6 +412,7 @@
         '事件类型：' + eventType,
         '',
         '请生成一个简短的世界事件（1-2 句话），可能影响玩家或这座城市。',
+        '如果事件应该对玩家状态有机械影响，请在末尾添加 [效果: 属性名 +/-数值]，例如 [效果: 压力 +5] 或 [效果: 金钱 -10]。',
         '请用中文回复。不要返回 JSON，不要添加评论。'
       ];
 
