@@ -88,6 +88,14 @@
           '止痛药': { type: 'consumable', effects: { health: 20, stress: -5 }, desc: '恢复健康，放松心情' }
         };
       }
+      // NPC relationship compat: ensure all NPCs have relationship data.
+      if (State.variables.npcs) {
+        for (var nid in State.variables.npcs) {
+          if (State.variables.npcs.hasOwnProperty(nid)) {
+            if (typeof initRelationship === 'function') initRelationship(State.variables.npcs[nid]);
+          }
+        }
+      }
     }
   <</script>>
 <</silently>>

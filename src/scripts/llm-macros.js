@@ -1,4 +1,4 @@
-/* LLM SugarCube macros: llmscene, llmchat, llmconfig */
+/* LLM SugarCube macros: llmconfig, llmscene2, llmnpc, llmquest, npcchat, hubscene */
 (function () {
   'use strict';
 
@@ -30,127 +30,11 @@
     }
   }
 
-  // <<llmscene "Location" "Mood" "Description">>
-  Macro.add('llmscene', {
-    handler: function () {
-      var self = this;
-      var deps = ensureDependencies();
-      if (!deps.llm || !deps.prompt || !deps.ui) {
-        renderMissingDeps(self.output);
-        return;
-      }
-      if (!LLMEngine.isAvailable()) {
-        renderDisabled(self.output);
-        return;
-      }
-
-      var location = this.args[0] || State.variables.location || 'Unknown';
-      var mood = this.args[1] || 'neutral';
-      var description = this.args[2] || '';
-
-      var container = NarrativeUI.createChatContainer();
-      self.output.appendChild(container);
-
-      var prompt = PromptBuilder.scenePrompt({
-        location: location,
-        mood: mood,
-        description: description
-      });
-
-      var hookData = { prompt: prompt, location: location, mood: mood, description: description };
-      fireHook('llmPromptReady', hookData);
-      prompt = hookData.prompt;
-
-      NarrativeUI.renderStreaming(container, function (options) {
-        return LLMEngine.generate(prompt, options);
-      }, {
-        onComplete: function (text) {
-          var responseData = { text: text, location: location, mood: mood };
-          fireHook('llmResponseReady', responseData);
-          PromptBuilder.addToHistory('assistant', responseData.text, 'scene');
-          State.variables.llmSession.lastResponse = responseData.text;
-        },
-        onError: function (err) {
-          console.error('[llmscene] Generation failed:', err);
-        },
-        onRetry: function () {
-          NarrativeUI.renderStreaming(container, function (options) {
-            return LLMEngine.generate(prompt, options);
-          }, {
-            onComplete: function (text) {
-              var responseData = { text: text, location: location, mood: mood };
-              fireHook('llmResponseReady', responseData);
-              PromptBuilder.addToHistory('assistant', responseData.text);
-              State.variables.llmSession.lastResponse = responseData.text;
-            }
-          });
-        }
-      });
-    }
-  });
-
-  // <<llmchat "Context">>
-  Macro.add('llmchat', {
-    handler: function () {
-      var self = this;
-      var deps = ensureDependencies();
-      if (!deps.llm || !deps.prompt || !deps.ui) {
-        renderMissingDeps(self.output);
-        return;
-      }
-      if (!LLMEngine.isAvailable()) {
-        renderDisabled(self.output);
-        return;
-      }
-
-      var context = this.args[0] || '玩家正在当前地点自由发言。';
-      var container = NarrativeUI.createChatContainer();
-      self.output.appendChild(container);
-
-      var history = State.variables.llmHistory || [];
-      history.forEach(function (entry) {
-        if (entry.role && entry.content) {
-          NarrativeUI.appendMessage(container, entry.role, entry.content);
-        }
-      });
-
-      var inputRow = NarrativeUI.createInputRow(container, function (userText) {
-        NarrativeUI.appendMessage(container, 'user', userText);
-        PromptBuilder.addToHistory('user', userText, 'chat');
-
-        var messages = PromptBuilder.chatPrompt(userText, context);
-        fireHook('llmPromptReady', { prompt: messages, context: context, type: 'chat' });
-
-        NarrativeUI.renderStreaming(container, function (options) {
-          return LLMEngine.chat(messages, options);
-        }, {
-          onComplete: function (text) {
-            var responseData = { text: text, context: context, type: 'chat' };
-            fireHook('llmResponseReady', responseData);
-            PromptBuilder.addToHistory('assistant', responseData.text, 'chat');
-          },
-          onError: function (err) {
-            console.error('[llmchat] Chat failed:', err);
-          },
-          onRetry: function () {
-            NarrativeUI.renderStreaming(container, function (options) {
-              return LLMEngine.chat(messages, options);
-            }, {
-              onComplete: function (text) {
-                var responseData = { text: text, context: context, type: 'chat' };
-                fireHook('llmResponseReady', responseData);
-                PromptBuilder.addToHistory('assistant', responseData.text, 'chat');
-              }
-            });
-          }
-        });
-      });
-
-      setTimeout(function () {
-        if (inputRow && inputRow.input) inputRow.input.focus();
-      }, 50);
-    }
-  });
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
 
   // <<llmconfig>>
   Macro.add('llmconfig', {
@@ -330,12 +214,13 @@
     if (!Array.isArray(options)) return LLMStructured.fallbackOptions(3);
     return options.map(function (opt) {
       if (!opt || typeof opt !== 'object') {
-        return { label: '离开', target: 'Street', tooltip: '离开这里' };
+        return { label: '离开', target: 'Street', tooltip: '离开这里', effects: {} };
       }
       return {
         label: opt.label || '继续',
         target: normalizeTarget(opt.target),
-        tooltip: opt.tooltip || ''
+        tooltip: opt.tooltip || '',
+        effects: opt.effects || {}
       };
     }).filter(function (opt) {
       return opt.label && opt.target;
@@ -442,92 +327,6 @@
     }
   });
 
-  // <<llmoptions "Context" "Count">>
-  // Generates contextual player options and renders them as action links.
-  Macro.add('llmoptions', {
-    handler: function () {
-      var self = this;
-      var deps = ensureDependencies();
-      if (!deps.llm || !deps.prompt || !deps.ui) {
-        renderMissingDeps(self.output);
-        return;
-      }
-      if (!ensureStructured()) {
-        var err = document.createElement('div');
-        err.className = 'llm-error-banner';
-        err.textContent = 'LLMStructured 模块未加载。';
-        self.output.appendChild(err);
-        return;
-      }
-      if (!LLMEngine.isAvailable()) {
-        renderDisabled(self.output);
-        return;
-      }
-
-      var context = this.args[0] || 'The player is deciding what to do next.';
-      var count = parseInt(this.args[1], 10) || 3;
-
-      var container = document.createElement('div');
-      container.className = 'llm-options-container';
-      self.output.appendChild(container);
-
-      var prompt = PromptBuilder.optionsPrompt(context, count);
-      var schema = {
-        required: [],
-        types: {} // array schema: validate items manually
-      };
-
-      var hookData = { prompt: prompt, context: context, count: count, type: 'options' };
-      fireHook('llmPromptReady', hookData);
-      prompt = hookData.prompt;
-
-      var typing = NarrativeUI.showTyping(container);
-
-      LLMStructured.generateJSON(prompt, schema, function () {
-        return LLMStructured.fallbackOptions(count);
-      }).then(function (options) {
-        NarrativeUI.hideTyping(container);
-
-        if (!Array.isArray(options)) {
-          options = LLMStructured.fallbackOptions(count);
-        }
-
-        options = normalizeOptions(options);
-
-        if (options.length === 0) {
-          options = LLMStructured.fallbackOptions(count);
-        }
-
-        var responseData = { options: options, context: context, type: 'options' };
-        fireHook('llmResponseReady', responseData);
-        options = responseData.options;
-
-        options.forEach(function (opt) {
-          var el = document.createElement('a');
-          el.className = 'action-link';
-          el.textContent = opt.label;
-          el.title = opt.tooltip || '';
-          el.setAttribute('data-passage', opt.target);
-          el.addEventListener('click', function (ev) {
-            ev.preventDefault();
-            if (opt.target.indexOf('llm:') === 0) {
-              State.variables.llmGatewayTarget = opt.target;
-              Engine.play('LLMGateway');
-            } else {
-              Engine.play(opt.target);
-            }
-          });
-          container.appendChild(el);
-        });
-      }).catch(function (err) {
-        NarrativeUI.hideTyping(container);
-        NarrativeUI.showError(container, err.message || String(err), function () {
-          Engine.play(passage());
-        });
-      });
-    }
-  });
-
   // <<llmnpc "Name" "Role" "Location">>
   // Generates an NPC and stores it in $npcs.
   Macro.add('llmnpc', {
@@ -594,6 +393,7 @@
 
         npc.dialogue = npc.dialogue || [];
         npc.disposition = typeof npc.disposition === 'number' ? npc.disposition : 0;
+        if (typeof initRelationship === 'function') initRelationship(npc);
 
         var responseData = { npc: npc, type: 'npc' };
         fireHook('llmResponseReady', responseData);
@@ -604,10 +404,10 @@
 
         var intro = document.createElement('div');
         intro.className = 'llm-npc-card';
-        intro.innerHTML = '<h3>' + npc.name + '</h3>' +
-          '<p><em>' + npc.role + '</em> at ' + npc.location + '</p>' +
-          '<p>Traits: ' + (npc.traits ? npc.traits.join(', ') : 'unknown') + '</p>' +
-          '<p>' + (npc.memory || '') + '</p>';
+        intro.innerHTML = '<h3>' + escapeHtml(npc.name) + '</h3>' +
+          '<p><em>' + escapeHtml(npc.role) + '</em> at ' + escapeHtml(npc.location) + '</p>' +
+          '<p>Traits: ' + escapeHtml(npc.traits ? npc.traits.join(', ') : 'unknown') + '</p>' +
+          '<p>' + escapeHtml(npc.memory || '') + '</p>';
         container.appendChild(intro);
 
         var chatBtn = document.createElement('button');
@@ -708,13 +508,25 @@
         var card = document.createElement('div');
         card.className = 'llm-quest-card';
         var objectives = quest.objectives.map(function (o) {
-          return '<li>' + (o.completed ? '[✓] ' : '[ ] ') + o.text + '</li>';
+          return '<li>' + (o.completed ? '[✓] ' : '[ ] ') + escapeHtml(o.text) + '</li>';
         }).join('');
-        card.innerHTML = '<h3>任务：' + quest.title + '</h3>' +
-          '<p>' + quest.description + '</p>' +
+        card.innerHTML = '<h3>任务：' + escapeHtml(quest.title) + '</h3>' +
+          '<p>' + escapeHtml(quest.description) + '</p>' +
           '<ul>' + objectives + '</ul>' +
-          '<p>奖励：' + (quest.rewards ? quest.rewards.join('、') : '无') + '</p>';
+          '<p>奖励：' + escapeHtml(quest.rewards ? quest.rewards.join('、') : '无') + '</p>';
         container.appendChild(card);
+
+        var turnInBtn = document.createElement('button');
+        turnInBtn.textContent = '提交任务';
+        turnInBtn.addEventListener('click', function () {
+          var msgs = checkQuestCompletion();
+          if (msgs.length > 0) {
+            NarrativeUI.showToast(msgs.join('\n'));
+          } else {
+            NarrativeUI.showToast('任务尚未完成。');
+          }
+        });
+        container.appendChild(turnInBtn);
       }).catch(function (err) {
         NarrativeUI.hideTyping(container);
         NarrativeUI.showError(container, err.message || String(err), function () {
@@ -807,9 +619,148 @@
     }
   });
 
+  // <<hubscene "Location" "mood" "anchorText">>
+  // 中枢场景组合宏：流式 LLM 叙事 + 情境化动态选项 + NPC/探索入口。
+  // 供 Bedroom/Street/Park/Shop 等手写中枢调用。
+  Macro.add('hubscene', {
+    handler: function () {
+      var self = this;
+      var deps = ensureDependencies();
+      if (!deps.llm || !deps.prompt || !deps.ui) {
+        renderMissingDeps(self.output);
+        return;
+      }
+      if (!ensureStructured()) {
+        var serr = document.createElement('div');
+        serr.className = 'llm-error-banner';
+        serr.textContent = 'LLMStructured 模块未加载。';
+        self.output.appendChild(serr);
+        return;
+      }
+      if (!LLMEngine.isAvailable()) {
+        renderDisabled(self.output);
+        return;
+      }
+
+      var location = this.args[0] || State.variables.location || 'Unknown';
+      var mood = this.args[1] || 'neutral';
+      var anchorText = this.args[2] || '';
+      var optionCount = parseInt(this.args[3], 10) || 3;
+
+      // --- 1. 流式叙事 ---
+      var narration = NarrativeUI.createChatContainer();
+      self.output.appendChild(narration);
+
+      var scenePrompt = PromptBuilder.scenePrompt({
+        location: location,
+        mood: mood,
+        description: anchorText
+      });
+      var sHook = { prompt: scenePrompt, location: location, mood: mood, description: anchorText, type: 'hubscene' };
+      fireHook('llmPromptReady', sHook);
+      scenePrompt = sHook.prompt;
+
+      function renderNarration() {
+        NarrativeUI.renderStreaming(narration, function (options) {
+          return LLMEngine.generate(scenePrompt, options);
+        }, {
+          onComplete: function (text) {
+            var rd = { text: text, location: location, mood: mood, type: 'hubscene' };
+            fireHook('llmResponseReady', rd);
+            PromptBuilder.addToHistory('assistant', rd.text, 'scene');
+            State.variables.llmSession.lastResponse = rd.text;
+          },
+          onError: function (err) {
+            console.error('[hubscene] Narration failed:', err);
+          },
+          onRetry: renderNarration
+        });
+      }
+      renderNarration();
+
+      // --- 2. 情境化动态选项 ---
+      var optionsBox = document.createElement('div');
+      optionsBox.className = 'llm-options-container';
+      self.output.appendChild(optionsBox);
+
+      var context = anchorText
+        ? (location + '：' + anchorText)
+        : ('玩家正在 ' + location + '，正在决定下一步做什么。');
+      var optPrompt = PromptBuilder.optionsPrompt(context, optionCount);
+      var oHook = { prompt: optPrompt, context: context, count: optionCount, type: 'hubscene-options' };
+      fireHook('llmPromptReady', oHook);
+      optPrompt = oHook.prompt;
+
+      NarrativeUI.showTyping(optionsBox);
+
+      LLMStructured.generateJSON(optPrompt, { required: [], types: {} }, function () {
+        return LLMStructured.fallbackOptions(optionCount);
+      }).then(function (options) {
+        NarrativeUI.hideTyping(optionsBox);
+
+        if (!Array.isArray(options)) options = LLMStructured.fallbackOptions(optionCount);
+        options = normalizeOptions(options);
+        if (options.length === 0) options = LLMStructured.fallbackOptions(optionCount);
+
+        var rd = { options: options, context: context, type: 'hubscene-options' };
+        fireHook('llmResponseReady', rd);
+        options = rd.options;
+
+        options.forEach(function (opt) {
+          var el = document.createElement('a');
+          el.className = 'action-link';
+          el.textContent = opt.label;
+          el.title = opt.tooltip || '';
+          el.setAttribute('data-passage', opt.target);
+          el.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            if (opt.effects && typeof applyEffects === 'function') {
+              var msgs = applyEffects(opt.effects);
+              if (msgs.length > 0) NarrativeUI.showToast(msgs.join('，'));
+            }
+            if (opt.target.indexOf('llm:') === 0) {
+              State.variables.llmGatewayTarget = opt.target;
+              Engine.play('LLMGateway');
+            } else {
+              Engine.play(opt.target);
+            }
+          });
+          optionsBox.appendChild(el);
+        });
+
+        // --- 3. 固定入口：探索周围 / 与附近的人交谈 ---
+        var explore = document.createElement('a');
+        explore.className = 'action-link';
+        explore.textContent = '探索周围';
+        explore.title = '让 LLM 生成此地的一段动态遭遇';
+        explore.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          State.variables.llmGatewayTarget = 'llm:generate:' + location + '周围发生的事';
+          Engine.play('LLMGateway');
+        });
+        optionsBox.appendChild(explore);
+
+        var talk = document.createElement('a');
+        talk.className = 'action-link';
+        talk.textContent = '与附近的人交谈';
+        talk.title = '遇见并和此地的某个人对话';
+        talk.addEventListener('click', function (ev) {
+          ev.preventDefault();
+          Engine.play('MeetNPC');
+        });
+        optionsBox.appendChild(talk);
+      }).catch(function (err) {
+        NarrativeUI.hideTyping(optionsBox);
+        NarrativeUI.showError(optionsBox, err.message || String(err), function () {
+          Engine.play(passage());
+        });
+      });
+    }
+  });
+
   if (typeof whenSugarCubeReady !== 'undefined') {
     whenSugarCubeReady(function () {
-      console.log('[LLM Macros] Loaded: llmscene, llmchat, llmconfig, llmscene2, llmoptions, llmnpc, llmquest, npcchat');
+      console.log('[LLM Macros] Loaded: llmconfig, llmscene2, llmnpc, llmquest, npcchat, hubscene');
     });
   }
 }());

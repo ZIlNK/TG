@@ -260,6 +260,85 @@
     return threshold > 0 ? (s.xp / threshold) : 0;
   };
 
+  // NPC relationship data: tiers, initialization, decay
+  var RELATIONSHIP_TIERS = [
+    { name: '陌生人', min: 0, max: 19 },
+    { name: '熟人', min: 20, max: 39 },
+    { name: '朋友', min: 40, max: 59 },
+    { name: '密友', min: 60, max: 79 },
+    { name: '挚友', min: 80, max: 100 }
+  ];
+
+  window.initRelationship = function (npc) {
+    if (!npc) return;
+    if (!npc.relationship) {
+      npc.relationship = {
+        tier: '陌生人',
+        value: 0,
+        history: [],
+        lastMetDay: State.variables.time ? State.variables.time.day : 1,
+        meetCount: 1
+      };
+    }
+    // Ensure all sub-fields exist on partial data
+    if (!npc.relationship.history) npc.relationship.history = [];
+    if (typeof npc.relationship.value !== 'number') npc.relationship.value = 0;
+    if (typeof npc.relationship.lastMetDay !== 'number') npc.relationship.lastMetDay = State.variables.time ? State.variables.time.day : 1;
+    if (typeof npc.relationship.meetCount !== 'number') npc.relationship.meetCount = 1;
+    updateRelationshipTier(npc);
+    return npc.relationship;
+  };
+
+  window.updateRelationshipTier = function (npc) {
+    if (!npc || !npc.relationship) return;
+    var val = npc.relationship.value || 0;
+    for (var i = RELATIONSHIP_TIERS.length - 1; i >= 0; i--) {
+      if (val >= RELATIONSHIP_TIERS[i].min) {
+        npc.relationship.tier = RELATIONSHIP_TIERS[i].name;
+        return;
+      }
+    }
+    npc.relationship.tier = '陌生人';
+  };
+
+  window.getRelationshipTier = function (npc) {
+    if (!npc || !npc.relationship) return '陌生人';
+    return npc.relationship.tier;
+  };
+
+  window.getRelationshipProgress = function (npc) {
+    if (!npc || !npc.relationship) return 0;
+    var val = npc.relationship.value || 0;
+    var currentMin = 0, nextMax = 20;
+    for (var i = 0; i < RELATIONSHIP_TIERS.length; i++) {
+      if (val >= RELATIONSHIP_TIERS[i].min && val <= RELATIONSHIP_TIERS[i].max) {
+        currentMin = RELATIONSHIP_TIERS[i].min;
+        nextMax = (i < RELATIONSHIP_TIERS.length - 1) ? RELATIONSHIP_TIERS[i + 1].min : RELATIONSHIP_TIERS[i].max;
+        break;
+      }
+    }
+    var range = nextMax - currentMin;
+    return range > 0 ? (val - currentMin) / range : 1;
+  };
+
+  // Relationship decay: called on day rollover
+  window.decayRelationships = function () {
+    var npcs = State.variables.npcs;
+    if (!npcs) return;
+    var currentDay = State.variables.time ? State.variables.time.day : 1;
+    for (var id in npcs) {
+      if (!npcs.hasOwnProperty(id)) continue;
+      var npc = npcs[id];
+      if (!npc.relationship) continue;
+      var daysSinceMet = currentDay - (npc.relationship.lastMetDay || currentDay);
+      if (daysSinceMet > 3) {
+        var decay = Math.floor(daysSinceMet / 3);
+        npc.relationship.value = Math.max(0, (npc.relationship.value || 0) - decay);
+        updateRelationshipTier(npc);
+      }
+    }
+  };
+
   // Apply a structured effects object to player state. Returns human-readable change messages.
   window.applyEffects = function (effects) {
     if (!effects || typeof effects !== 'object') return [];
@@ -498,6 +577,7 @@
         var weathers = ['clear', 'rain', 'cloudy', 'fog'];
         State.variables.world.weather = weathers[Math.floor(Math.random() * weathers.length)];
         State.variables.world.temperature = Math.floor(Math.random() * 21) + 15;
+        if (typeof decayRelationships === 'function') decayRelationships();
       }
 
       // Hunger increases by 5 per 2 hours of elapsed time, scaled by difficulty.
