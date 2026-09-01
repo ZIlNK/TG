@@ -7,8 +7,39 @@
 
 你的钱包里有 <<print "$" + $player.money>>。
 
+<<if !(typeof LLMEngine !== 'undefined' && LLMEngine.isAvailable())>>
+<div class="llm-error-banner">本作的叙事由 LLM 实时生成，尚未检测到可用配置。请先前往「LLM 配置」设置接口与模型，否则场景、选项与 NPC 对话将无法生成。</div>
+
+<<action "前往 LLM 配置" "LLMConfig" "配置 Ollama 或兼容 OpenAI 的接口">>
+<</if>>
+
+<<if not $game.tutorialComplete>>
+<div class="tutorial-hint">
+<strong>提示：</strong>你的第一个任务是「新生活的第一天」。点击「起床看看」开始，注意管理体力、饥饿和压力。难度可在设置中调整。
+</div>
+<</if>>
+
 你要做什么？
 
 <<action "起床看看" "Bedroom" "开始你的一天">>
 <<action "检查随身物品" "Inventory" "看看你拥有什么">>
 <<action "打开设置" "Settings" "保存、读取或配置">>
+
+<<silently>>
+  <<if not $game.tutorialComplete and not ($quests.tutorial)>>
+    <<set $quests.tutorial = {
+      id: "tutorial",
+      title: "新生活的第一天",
+      description: "你刚搬到这座城市。先熟悉一下基本生存节奏吧。",
+      giver: "",
+      objectives: [
+        {text: "在卧室睡一次觉", completed: false},
+        {text: "去街上看看", completed: false},
+        {text: "在商店买一次食物", completed: false}
+      ],
+      rewards: ["金钱 10", "声望 2"],
+      status: "active"
+    }>>
+    <<set $activeQuestId to "tutorial">>
+  <</if>>
+<</silently>>

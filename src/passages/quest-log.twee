@@ -1,0 +1,44 @@
+:: QuestLog
+!任务日志
+
+<<set _ids to Object.keys($quests)>>
+<<if _ids.length gt 0>>
+  <<for _i to 0; _i lt _ids.length; _i++>>
+    <<set _q to $quests[_ids[_i]]>>
+    <div class="llm-quest-card">
+      <h3>任务：<<print _q.title>></h3>
+      <p><<print _q.description>></p>
+      <<if _q.objectives && _q.objectives.length gt 0>>
+      <ul>
+        <<for _obj range _q.objectives>>
+        <li><<if _obj.completed>>[✓]<<else>>[ ]<</if>> <<print _obj.text>></li>
+        <</for>>
+      </ul>
+      <</if>>
+      <p>状态：<<print _q.status || "active">></p>
+      <p>奖励：<<print (_q.rewards && _q.rewards.length) ? _q.rewards.join("、") : "无">></p>
+      <<if _q.status is "active">>
+        <<set _allDone to true>>
+        <<for _obj range _q.objectives>>
+          <<if not _obj.completed>><<set _allDone to false>><</if>>
+        <</for>>
+        <<if _allDone>>
+          <div class="quest-completable">任务可提交！</div>
+          <<link "提交任务">>
+            <<set _msgs to checkQuestCompletion()>>
+            <<if _msgs.length gt 0>>
+              <<run (typeof NarrativeUI !== 'undefined') && NarrativeUI.showToast(_msgs.join("\n"))>>
+            <<else>>
+              <<run (typeof NarrativeUI !== 'undefined') && NarrativeUI.showToast("任务尚未完成。")>>
+            <</if>>
+            <<goto "QuestLog">>
+          <</link>>
+        <</if>>
+      <</if>>
+    </div>
+  <</for>>
+<<else>>
+  你目前没有任何任务。和城里的人交谈，也许能找到些事做。
+<</if>>
+
+<<action "返回" $location "回到原处">>

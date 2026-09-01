@@ -11,13 +11,25 @@
   <<set _opts to _scene.options>>
   <<for _opt range _opts>>
     <<capture _opt>>
+      <<set _hasEffects to _opt.effects and Object.keys(_opt.effects).length gt 0>>
+      <<set _effectMsgs to "">>
+      <<if _hasEffects>>
+        <<set _effectMsgs to applyEffects(_opt.effects).join("，")>>
+      <</if>>
       <<if _opt.target.indexOf("llm:") eq 0>>
         <<link _opt.label>>
+          <<if _effectMsgs neq "">>
+            <<run NarrativeUI.showToast(_effectMsgs)>>
+          <</if>>
           <<set $llmGatewayTarget to _opt.target>>
           <<goto "LLMGateway">>
         <</link>>
       <<else>>
-        <<action _opt.label _opt.target _opt.tooltip>>
+        <<link _opt.label _opt.target>>
+          <<if _effectMsgs neq "">>
+            <<run NarrativeUI.showToast(_effectMsgs)>>
+          <</if>>
+        <</link>>
       <</if>>
     <</capture>>
   <</for>>

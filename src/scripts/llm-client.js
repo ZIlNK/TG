@@ -9,6 +9,7 @@
       return State.variables.llmConfig;
     }
     return {
+      enabled: true,
       provider: 'ollama',
       endpoint: 'http://localhost:11434',
       model: 'llama3.2',

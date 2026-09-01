@@ -104,6 +104,18 @@
       return banner;
     },
 
+    showToast: function (message, duration) {
+      duration = duration || 2500;
+      var existing = document.querySelector('.effect-toast');
+      if (existing) existing.remove();
+
+      var toast = createElement('div', 'effect-toast', document.body);
+      toast.textContent = message;
+      setTimeout(function () {
+        if (toast.parentNode) toast.parentNode.removeChild(toast);
+      }, duration);
+    },
+
     renderStreaming: function (container, promiseFactory, options) {
       options = options || {};
       if (typeof container === 'string') {
