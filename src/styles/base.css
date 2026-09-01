@@ -1,25 +1,32 @@
 /* Base reset and SugarCube UI overrides */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
 html {
-  font-size: 16px;
+  font-size: 14px;
   line-height: 1.6;
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #1a1a1a;
-  color: #cccccc;
+  font-family: var(--font-sans, 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif);
+  background: var(--bg-body, #0a0a0a);
+  color: var(--text-secondary, #858585);
 }
 
 #ui-bar {
-  background: #222222;
-  border-right: 1px solid #333333;
+  background: var(--bg-ui, #171717);
+  border-right: 1px solid var(--border-color, #282828);
 }
 
 #ui-bar-history {
@@ -31,8 +38,9 @@ body {
 }
 
 #ui-bar h1, #ui-bar h2, #ui-bar h3 {
-  color: #ffffff;
+  color: var(--text-primary, #fafafa);
   margin: 0.5rem 0;
+  font-family: var(--font-sans);
 }
 
 #passages {
@@ -42,32 +50,36 @@ body {
 }
 
 .passage {
-  background: #222222;
-  border: 1px solid #333333;
-  border-radius: 4px;
+  background: var(--bg-passage, #171717);
+  border: 1px solid var(--border-color, #282828);
+  border-radius: var(--radius, 8px);
   padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow, 0 1px 2px rgba(0, 0, 0, 0.2));
 }
 
 .passage h1 {
-  color: #ffffff;
+  color: var(--text-primary, #fafafa);
   margin-top: 0;
-  border-bottom: 2px solid #444444;
-  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color, #282828);
+  padding-bottom: 0.75rem;
+  font-family: var(--font-serif, 'DM Serif Display', 'Songti SC', 'SimSun', Georgia, serif);
+  font-size: 2rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
 .passage h2, .passage h3 {
-  color: #eeeeee;
+  color: var(--text-primary, #fafafa);
 }
 
 .passage a {
-  color: #66bb6a;
-  text-decoration: none;
+  color: var(--text-primary, #fafafa);
+  text-decoration: underline;
 }
 
 .passage a:hover {
-  color: #81c784;
-  text-decoration: underline;
+  color: var(--accent-hover, #e5e5e5);
 }
 
 button, input, select, textarea {
@@ -76,16 +88,27 @@ button, input, select, textarea {
 }
 
 button {
-  background: #333333;
-  color: #ffffff;
-  border: 1px solid #555555;
-  border-radius: 3px;
-  padding: 0.5rem 1rem;
+  background: var(--bg-input, #262626);
+  color: var(--text-primary, #fafafa);
+  border: 1px solid var(--border-color, #282828);
+  border-radius: var(--radius, 8px);
+  padding: 7px 14px;
   cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
 button:hover {
-  background: #444444;
+  background: var(--border-color, #282828);
+}
+
+input, select, textarea {
+  background: var(--bg-input, #262626);
+  color: var(--text-primary, #fafafa);
+  border: 1px solid var(--border-color, #282828);
+  border-radius: var(--radius, 8px);
+  padding: 0.5rem 0.75rem;
 }
 
 /* Scrollbar styling */
@@ -95,16 +118,16 @@ button:hover {
 }
 
 ::-webkit-scrollbar-track {
-  background: #1a1a1a;
+  background: var(--bg-body, #0a0a0a);
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #444444;
+  background: var(--border-color, #282828);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555555;
+  background: var(--text-muted, #858585);
 }
 
 /* Utility */

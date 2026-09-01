@@ -1,68 +1,192 @@
-/* Default dark theme (DoL-inspired) */
+/* Default dark theme — Vercel design system dark mode */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 html[data-theme="default"],
+html[data-theme="dark"],
 :root {
-  --bg-body: #1a1a1a;
-  --bg-passage: #222222;
-  --bg-ui: #222222;
-  --bg-input: #333333;
-  --border-color: #333333;
-  --text-primary: #ffffff;
-  --text-secondary: #cccccc;
-  --text-muted: #888888;
-  --accent: #66bb6a;
-  --accent-hover: #81c784;
-  --danger: #f44336;
+  /* Vercel monochrome surfaces (dark) */
+  --bg-body: #0a0a0a;
+  --bg-passage: #171717;
+  --bg-ui: #171717;
+  --bg-input: #262626;
+  --border-color: #282828;
+
+  /* Text scale */
+  --text-primary: #fafafa;
+  --text-secondary: #858585;
+  --text-muted: #858585;
+
+  /* Accent / interactive */
+  --accent: #fafafa;
+  --accent-hover: #e5e5e5;
+  --danger: #ff6467;
+
+  /* Status colors */
+  --success: #62d178;
+  --error: #ff6166;
+  --destructive: #ff6467;
+
+  /* Chart blue ramp (data visualization only) */
+  --chart-1: #91c5ff;
+  --chart-2: #3a81f6;
+  --chart-3: #2563ef;
+  --chart-4: #1a4eda;
+  --chart-5: #1f3fad;
+
+  /* Typography */
+  --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+  --font-serif: 'DM Serif Display', 'Songti SC', 'SimSun', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', 'Consolas', 'Menlo', monospace;
+
+  /* Spacing / radius / shadow */
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-html[data-theme="default"] body {
+html[data-theme="default"] body,
+html[data-theme="dark"] body {
   background: var(--bg-body);
   color: var(--text-secondary);
+  font-family: var(--font-sans);
 }
 
-html[data-theme="default"] #ui-bar {
+html[data-theme="default"] #ui-bar,
+html[data-theme="dark"] #ui-bar {
   background: var(--bg-ui);
   border-color: var(--border-color);
 }
 
-html[data-theme="default"] .passage {
+html[data-theme="default"] .passage,
+html[data-theme="dark"] .passage {
   background: var(--bg-passage);
   border-color: var(--border-color);
+  box-shadow: var(--shadow);
 }
 
 html[data-theme="default"] .passage h1,
 html[data-theme="default"] .passage h2,
-html[data-theme="default"] .passage h3 {
+html[data-theme="default"] .passage h3,
+html[data-theme="dark"] .passage h1,
+html[data-theme="dark"] .passage h2,
+html[data-theme="dark"] .passage h3 {
   color: var(--text-primary);
 }
 
-html[data-theme="default"] .action-link {
-  background: #2d3b2d;
-  border-color: var(--accent);
-  color: #a5d6a7;
+html[data-theme="default"] .passage a,
+html[data-theme="dark"] .passage a {
+  color: var(--text-primary);
+  text-decoration: underline;
 }
 
-html[data-theme="default"] .action-link:hover {
-  background: #3d4f3d;
+html[data-theme="default"] .passage a:hover,
+html[data-theme="dark"] .passage a:hover {
   color: var(--accent-hover);
 }
 
-html[data-theme="default"] a {
-  color: var(--accent);
+html[data-theme="default"] .action-link,
+html[data-theme="dark"] .action-link {
+  background: var(--bg-input);
+  border-color: var(--border-color);
+  color: var(--text-primary);
 }
 
-html[data-theme="default"] a:hover {
+html[data-theme="default"] .action-link:hover,
+html[data-theme="dark"] .action-link:hover {
+  background: var(--border-color);
+  color: var(--text-primary);
+}
+
+html[data-theme="default"] .action-link.primary,
+html[data-theme="dark"] .action-link.primary {
+  background: var(--text-primary);
+  border-color: var(--text-primary);
+  color: var(--bg-passage);
+}
+
+html[data-theme="default"] .action-link.primary:hover,
+html[data-theme="dark"] .action-link.primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--bg-passage);
+}
+
+html[data-theme="default"] .action-link.ghost,
+html[data-theme="dark"] .action-link.ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-primary);
+}
+
+html[data-theme="default"] .action-link.ghost:hover,
+html[data-theme="dark"] .action-link.ghost:hover {
+  background: var(--bg-input);
+}
+
+html[data-theme="default"] a,
+html[data-theme="dark"] a {
+  color: var(--text-primary);
+}
+
+html[data-theme="default"] a:hover,
+html[data-theme="dark"] a:hover {
   color: var(--accent-hover);
 }
 
-html[data-theme="default"] button {
+html[data-theme="default"] button,
+html[data-theme="dark"] button {
   background: var(--bg-input);
   color: var(--text-primary);
-  border-color: #555555;
+  border-color: var(--border-color);
 }
 
-html[data-theme="default"] button:hover {
-  background: #444444;
+html[data-theme="default"] button:hover,
+html[data-theme="dark"] button:hover {
+  background: var(--border-color);
+}
+
+html[data-theme="default"] .stat-bar-track,
+html[data-theme="dark"] .stat-bar-track {
+  background: var(--bg-input);
+}
+
+html[data-theme="default"] .save-slot,
+html[data-theme="dark"] .save-slot {
+  background: var(--bg-input);
+  border-color: var(--border-color);
+}
+
+html[data-theme="default"] .save-slot-title,
+html[data-theme="dark"] .save-slot-title {
+  color: var(--text-primary);
+}
+
+html[data-theme="default"] #menu li a,
+html[data-theme="dark"] #menu li a {
+  color: var(--text-secondary);
+}
+
+html[data-theme="default"] #menu li a:hover,
+html[data-theme="dark"] #menu li a:hover {
+  background: var(--bg-input);
+  color: var(--text-primary);
+}
+
+html[data-theme="default"] ::-webkit-scrollbar-track,
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: var(--bg-body);
+}
+
+html[data-theme="default"] ::-webkit-scrollbar-thumb,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+}
+
+html[data-theme="default"] ::-webkit-scrollbar-thumb:hover,
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 /* Widescreen mode */

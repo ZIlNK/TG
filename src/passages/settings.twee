@@ -85,12 +85,12 @@
   <h2>主题</h2>
   <p>当前主题：<strong><<print $theme>></strong></p>
   <div class="theme-buttons">
-    <<button "默认主题">>
-      <<run ThemeEngine.setTheme("default")>>
+    <<button "浅色模式">>
+      <<run ThemeEngine.setTheme("light")>>
       <<goto "Settings">>
     <</button>>
-    <<button "浅色主题">>
-      <<run ThemeEngine.setTheme("light")>>
+    <<button "暗色模式">>
+      <<run ThemeEngine.setTheme("dark")>>
       <<goto "Settings">>
     <</button>>
   </div>
