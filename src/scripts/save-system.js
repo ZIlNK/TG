@@ -52,6 +52,7 @@
     exportSlot: function (slot) {
       var info = this.getSlotInfo(slot);
       if (!info) return;
+      info.data = this._stripSecrets(info.data);
       var blob = new Blob([JSON.stringify(info, null, 2)], { type: 'application/json' });
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
@@ -83,6 +84,23 @@
         callback(new Error('File read error'), null);
       };
       reader.readAsText(file);
+    },
+
+    /* Remove sensitive fields (e.g. LLM API key) from serialized save data before export. */
+    _stripSecrets: function (data) {
+      try {
+        var save = JSON.parse(data);
+        var history = save && save.state && save.state.history;
+        if (Array.isArray(history)) {
+          history.forEach(function (entry) {
+            if (entry && entry.variables && entry.variables.llmConfig) {
+              entry.variables.llmConfig.apiKey = '';
+            }
+          });
+          return JSON.stringify(save);
+        }
+      } catch (e) { /* fall through to string scrub */ }
+      return String(data).replace(/("apiKey"\s*:\s*")[^"]*(")/g, '$1$2');
     },
 
     _generateTitle: function () {
