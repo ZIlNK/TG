@@ -49,12 +49,155 @@
     return { valid: true };
   }
 
+  // Tokenize a (possibly malformed) JSON string into a flat token stream.
+  // Strings are decoded to plain values (for safe re-serialization); everything
+  // else is kept as raw source text so it passes through untouched.
+  function tokenizeJSON(text) {
+    var tokens = [];
+    var i = 0;
+    var n = text.length;
+    while (i < n) {
+      var ch = text.charAt(i);
+      if (ch === ' ' || ch === '\t' || ch === '\n' || ch === '\r') { i++; continue; }
+      if (ch === '{' || ch === '}' || ch === '[' || ch === ']' || ch === ':' || ch === ',') {
+        tokens.push({ type: 'punct', raw: ch });
+        i++;
+        continue;
+      }
+      if (ch === '"') {
+        var j = i + 1;
+        var value = '';
+        while (j < n) {
+          var c = text.charAt(j);
+          if (c === '\\') {
+            var nc = text.charAt(j + 1);
+            if (nc === 'u') {
+              var code = parseInt(text.substr(j + 2, 4), 16);
+              value += (isNaN(code) ? '' : String.fromCharCode(code));
+              j += 6;
+            } else {
+              var escMap = { '"': '"', '\\': '\\', '/': '/', 'b': '\b', 'f': '\f', 'n': '\n', 'r': '\r', 't': '\t' };
+              value += (escMap[nc] !== undefined ? escMap[nc] : nc);
+              j += 2;
+            }
+          } else if (c === '"') {
+            j++;
+            break;
+          } else {
+            value += c;
+            j++;
+          }
+        }
+        tokens.push({ type: 'string', value: value, raw: text.substring(i, j) });
+        i = j;
+        continue;
+      }
+      // Non-string atom (number / true / false / null / anything else): keep raw.
+      var k = i;
+      while (k < n && ',:{}[] \t\n\r'.indexOf(text.charAt(k)) === -1) {
+        k++;
+      }
+      if (k > i) {
+        tokens.push({ type: 'raw', raw: text.substring(i, k) });
+        i = k;
+        continue;
+      }
+      i++; // safety: skip unrecognized character
+    }
+    return tokens;
+  }
+
+  // Repair the most common LLM JSON mistake: multi-paragraph text emitted as
+  // several bare strings instead of a single one. Merges orphan string literals
+  // (a string in key position that is not followed by ':') into the previous
+  // string value, joined by newlines. Never touches arrays or valid JSON.
+  function repairJSON(text) {
+    var tokens = tokenizeJSON(text);
+    if (!tokens.length) return text;
+    var out = [];
+    var scopes = [];
+    var repaired = false;
+    var skipNextComma = false;
+
+    function findLastStringValue() {
+      for (var k = out.length - 1; k >= 0; k--) {
+        if (out[k].type === 'string') {
+          var after = out[k + 1];
+          if (!after || after.type !== ':') return out[k];
+        }
+      }
+      return null;
+    }
+
+    for (var i = 0; i < tokens.length; i++) {
+      var t = tokens[i];
+      if (t.type === 'punct') {
+        if (t.raw === '{' || t.raw === '[') {
+          out.push(t);
+          scopes.push(t.raw === '{' ? 'object' : 'array');
+        } else if (t.raw === '}' || t.raw === ']') {
+          scopes.pop();
+          out.push(t);
+        } else if (t.raw === ',') {
+          if (skipNextComma) { skipNextComma = false; }
+          else { out.push(t); }
+        } else { // ':'
+          out.push(t);
+        }
+        continue;
+      }
+      if (t.type === 'raw') {
+        out.push(t);
+        continue;
+      }
+      // string token
+      var scope = scopes[scopes.length - 1];
+      var next = tokens[i + 1];
+      var isKey = scope === 'object' && next && next.type === 'punct' && next.raw === ':';
+      if (isKey) {
+        out.push(t);
+        continue;
+      }
+      var prev = out.length ? out[out.length - 1] : null;
+      var prevIsOpenOrComma = prev && prev.type === 'punct' && (prev.raw === '{' || prev.raw === ',');
+      if (scope === 'object' && prevIsOpenOrComma) {
+        // Orphan string: merge into the previous string value and drop it.
+        var target = findLastStringValue();
+        if (target) {
+          target.value += '\n' + t.value;
+          repaired = true;
+          skipNextComma = true;
+        }
+        continue;
+      }
+      out.push(t);
+    }
+
+    if (!repaired) return text;
+
+    var result = '';
+    for (var m = 0; m < out.length; m++) {
+      result += (out[m].type === 'string') ? JSON.stringify(out[m].value) : out[m].raw;
+    }
+    return result;
+  }
+
   function parseJSON(text) {
     var cleaned = sanitizeJSON(text);
     if (!cleaned) return { ok: false, error: 'No JSON found in response' };
     try {
       return { ok: true, data: JSON.parse(cleaned) };
     } catch (e) {
+      var repaired = repairJSON(cleaned);
+      if (repaired !== cleaned) {
+        try {
+          var data = JSON.parse(repaired);
+          console.warn('[LLMStructured] Repaired malformed JSON (merged orphan strings).');
+          return { ok: true, data: data };
+        } catch (e2) {
+          return { ok: false, error: 'JSON parse error (after repair): ' + e2.message };
+        }
+      }
       return { ok: false, error: 'JSON parse error: ' + e.message };
     }
   }

@@ -230,7 +230,7 @@
         '  "title": "string（场景标题）",',
         '  "location": "string",',
         '  "mood": "string",',
-        '  "text": "string（2-4 段叙事，中文）",',
+        '  "text": "string（2-4 段叙事，中文；必须是单个字符串，段落之间用 \\n 分隔，禁止拆成多个字符串）",',
         '  "options": [',
         '    { "label": "string（中文）", "target": "string", "tooltip": "string（中文）", "effects": { "health": number, "stamina": number, "stress": number, "money": number, "hunger": number, "trauma": number, "control": number, "arousal": number, "allure": number, "reputation": number, "items": [{"name": "string", "qty": number}], "questObjective": number, "npcDisposition": number, "timeAdvance": [hours, minutes] } }',
         '  ]',
@@ -238,6 +238,9 @@
         '',
         '如果选项涉及技能运用，请在 effects.skills 中指定技能经验值。',
         '支持的技能：运动、学识、社交、潜行、感知、意志、魅力',
+        '',
+        'text 必须是单个 JSON 字符串：多个段落用 \\n 连接，不要拆成多个并列字符串。',
+        '不要输出任何没有键名的裸字符串。',
         '',
         '请只返回合法 JSON。不要包含 markdown 代码块或评论。所有自然语言内容必须是中文。'
       ];

@@ -6,7 +6,7 @@
 
   <<sceneimg _scene.location>>
 
-  <<print _scene.text>>
+  <div class="scene-text"><<print _scene.text>></div>
 
   <<set _opts to _scene.options>>
   <<for _opt range _opts>>
