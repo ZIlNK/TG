@@ -133,6 +133,14 @@
     return function (input, options) {
       options = options || {};
       var config = getConfig();
+      if (options.maxTokens) {
+        var overridden = {};
+        for (var key in config) {
+          if (config.hasOwnProperty(key)) overridden[key] = config[key];
+        }
+        overridden.maxTokens = options.maxTokens;
+        config = overridden;
+      }
       var stream = options.stream !== false;
       var url;
       var payload;

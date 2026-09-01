@@ -2,6 +2,10 @@
 (function () {
   'use strict';
 
+  // Token budget for structured (JSON) generation. Structured output needs more
+  // room than freeform narration, otherwise it gets truncated mid-JSON.
+  var STRUCTURED_MAX_TOKENS = 1024;
+
   function sanitizeJSON(text) {
     if (!text || typeof text !== 'string') return '';
     var trimmed = text.trim();
@@ -12,21 +16,39 @@
       trimmed = fenceMatch[1].trim();
     }
 
-    // Find first { or [ and last } or ]
+    // Find the first { or [
     var startObj = trimmed.indexOf('{');
     var startArr = trimmed.indexOf('[');
-    var start = -1;
-    var isArray = false;
-
+    var start;
     if (startObj === -1 && startArr === -1) return '';
-    if (startObj === -1) { start = startArr; isArray = true; }
-    else if (startArr === -1) { start = startObj; }
-    else { start = Math.min(startObj, startArr); isArray = (startArr < startObj); }
+    if (startObj === -1) start = startArr;
+    else if (startArr === -1) start = startObj;
+    else start = Math.min(startObj, startArr);
 
-    var end = isArray ? trimmed.lastIndexOf(']') : trimmed.lastIndexOf('}');
-    if (end === -1 || end <= start) return '';
+    // Balanced scan from the opening bracket to its matching close. If the
+    // structure is never balanced (truncated output), keep everything from the
+    // opening bracket to the end so a later repair step can salvage it.
+    var depth = 0;
+    var inString = false;
+    for (var i = start; i < trimmed.length; i++) {
+      var c = trimmed.charAt(i);
+      if (inString) {
+        if (c === '\\') { i++; continue; }
+        if (c === '"') inString = false;
+        continue;
+      }
+      if (c === '"') { inString = true; continue; }
+      if (c === '{' || c === '[') { depth++; }
+      else if (c === '}' || c === ']') {
+        depth--;
+        if (depth === 0) {
+          return trimmed.substring(start, i + 1);
+        }
+      }
+    }
 
-    return trimmed.substring(start, end + 1);
+    // Unbalanced: return the whole remainder (truncated JSON).
+    return trimmed.substring(start);
   }
 
   function validate(object, schema) {
@@ -182,23 +204,125 @@
     return result;
   }
 
+  // Repair a JSON response that was truncated (e.g. the model hit its token
+  // limit mid-object). Drops the incomplete trailing element and closes any
+  // still-open containers so the salvageable prefix parses as valid JSON.
+  function repairTruncated(text) {
+    var tokens = tokenizeJSON(text);
+    if (!tokens.length) return text;
+
+    var stack = []; // frames: { type: 'object'|'array', state: ... }
+    var lastGood = -1;
+    var closersAtGood = '';
+
+    function statesAreClosable() {
+      for (var s = 0; s < stack.length; s++) {
+        var st = stack[s].state;
+        if (st === 'needColon' || st === 'needValue') return false;
+      }
+      return true;
+    }
+
+    function snapshotClosers() {
+      var closers = '';
+      for (var s = stack.length - 1; s >= 0; s--) {
+        closers += (stack[s].type === 'object' ? '}' : ']');
+      }
+      return closers;
+    }
+
+    for (var i = 0; i < tokens.length; i++) {
+      var t = tokens[i];
+      if (t.type === 'punct') {
+        if (t.raw === '{' || t.raw === '[') {
+          var parent = stack[stack.length - 1];
+          if (parent && (parent.state === 'needValue' || parent.state === 'needValueOrClose')) {
+            parent.state = 'needCommaOrClose';
+          }
+          stack.push({
+            type: t.raw === '{' ? 'object' : 'array',
+            state: t.raw === '{' ? 'needKeyOrClose' : 'needValueOrClose'
+          });
+        } else if (t.raw === '}' || t.raw === ']') {
+          stack.pop();
+          var p = stack[stack.length - 1];
+          if (p) p.state = 'needCommaOrClose';
+        } else if (t.raw === ':') {
+          var c = stack[stack.length - 1];
+          if (c && c.state === 'needColon') c.state = 'needValue';
+        } else { // ','
+          var c2 = stack[stack.length - 1];
+          if (c2 && c2.state === 'needCommaOrClose') {
+            c2.state = (c2.type === 'object' ? 'needKeyOrClose' : 'needValueOrClose');
+          }
+        }
+      } else if (t.type === 'string') {
+        var sc = stack[stack.length - 1];
+        if (sc) {
+          if (sc.type === 'object') {
+            if (sc.state === 'needKeyOrClose') sc.state = 'needColon';
+            else if (sc.state === 'needValue') sc.state = 'needCommaOrClose';
+          } else if (sc.state === 'needValueOrClose') {
+            sc.state = 'needCommaOrClose';
+          }
+        }
+      } else { // raw atom (number / true / false / null)
+        var sc2 = stack[stack.length - 1];
+        if (sc2 && (sc2.state === 'needValue' || sc2.state === 'needValueOrClose')) {
+          sc2.state = 'needCommaOrClose';
+        }
+      }
+
+      if (statesAreClosable()) {
+        var endsOnDelimiter = t.type === 'punct' && (t.raw === ',' || t.raw === ':');
+        if (!endsOnDelimiter) {
+          lastGood = i;
+          closersAtGood = snapshotClosers();
+        }
+      }
+    }
+
+    if (lastGood === -1) return text;
+    if (lastGood === tokens.length - 1 && stack.length === 0) return text;
+
+    var result = '';
+    for (var m = 0; m <= lastGood; m++) {
+      result += (tokens[m].type === 'string') ? JSON.stringify(tokens[m].value) : tokens[m].raw;
+    }
+    result += closersAtGood;
+    return result;
+  }
+
   function parseJSON(text) {
     var cleaned = sanitizeJSON(text);
     if (!cleaned) return { ok: false, error: 'No JSON found in response' };
+
     try {
       return { ok: true, data: JSON.parse(cleaned) };
-    } catch (e) {
+    } catch (firstError) {
       var repaired = repairJSON(cleaned);
       if (repaired !== cleaned) {
         try {
-          var data = JSON.parse(repaired);
+          var data1 = JSON.parse(repaired);
           console.warn('[LLMStructured] Repaired malformed JSON (merged orphan strings).');
-          return { ok: true, data: data };
+          return { ok: true, data: data1 };
+        } catch (e1) {
+          cleaned = repaired; // fall through, try truncation repair on the improved string
+        }
+      }
+
+      var completed = repairTruncated(cleaned);
+      if (completed !== cleaned) {
+        try {
+          var data2 = JSON.parse(completed);
+          console.warn('[LLMStructured] Repaired truncated JSON (closed incomplete output).');
+          return { ok: true, data: data2 };
         } catch (e2) {
           return { ok: false, error: 'JSON parse error (after repair): ' + e2.message };
         }
       }
-      return { ok: false, error: 'JSON parse error: ' + e.message };
+
+      return { ok: false, error: 'JSON parse error: ' + firstError.message };
     }
   }
 
@@ -214,7 +338,7 @@
           return;
         }
 
-        LLMEngine.generate(prompt, { stream: false }).then(function (text) {
+        LLMEngine.generate(prompt, { stream: false, maxTokens: STRUCTURED_MAX_TOKENS }).then(function (text) {
           var parsed = parseJSON(text);
           if (!parsed.ok) {
             console.warn('[LLMStructured] Parse failed:', parsed.error, '\nRaw:', text);
