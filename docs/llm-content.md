@@ -4,14 +4,14 @@ This document describes how the game uses a Large Language Model (LLM) to genera
 
 ## Overview
 
-Unlike the streaming prose macros (`<<llmscene>>`, `<<llmchat>>`) which only produce narrative text, the content-generation macros produce **structured JSON objects** that are stored in `State.variables`. A shared `DynamicScene` passage then renders these objects as playable scenes with action links.
+Unlike pure streaming prose, the content-generation macros produce **structured JSON objects** that are stored in `State.variables`. A shared `DynamicScene` passage then renders these objects as playable scenes with action links.
 
 Generated content is automatically saved and loaded with the existing save system.
 
 ## Architecture
 
 ```
-Macro call (<<llmscene2>> / <<llmoptions>> / <<llmnpc>> / <<llmquest>>)
+Macro call (<<llmscene2>> / <<hubscene>> / <<llmnpc>> / <<llmquest>>)
     ↓
 PromptBuilder.sceneObjectPrompt() / optionsPrompt() / npcPrompt() / questPrompt()
     ↓
@@ -66,17 +66,23 @@ Generated scene JSON schema:
 }
 ```
 
-### `<<llmoptions "Context" "Count">>`
+### `<<hubscene "Location" "Mood" "anchorText" [optionCount]>>`
 
-Generates contextual action options and renders them as clickable links.
+Hub composition macro used by the handwritten hub scenes (Bedroom / Street / Park / Shop). It renders three parts in one shot:
+
+1. Streaming LLM narration for the location (via `LLMEngine.generate`).
+2. Contextual action options generated as JSON and rendered as clickable links (options may carry `effects` applied via `applyEffects`).
+3. Fixed entries: “探索周围” (routes through `LLMGateway`) and “与附近的人交谈” (`MeetNPC`).
 
 Example:
 ```twee
-:: CityChoices
-!What will you do?
+:: Bedroom
+!卧室
 
-<<llmoptions "You are in the city with a few free hours." 4>>
+<<hubscene "Bedroom" "calm" "不大但整洁的卧室，靠墙一张床">>
 ```
+
+（已移除的 `<<llmoptions>>` 宏的功能已并入 `<<hubscene>>` 的第二部分。）
 
 ### `<<llmnpc "Name" "Role" "Location">>`
 
@@ -126,8 +132,8 @@ To prevent scene-generation prompts from being polluted by chat history (and vic
 
 | Channel | Used By | Storage |
 |---------|---------|---------|
-| `chat` | `<<llmchat>>` | `$llmHistory` entries with `channel: 'chat'` |
-| `scene` | `<<llmscene>>`, `<<llmscene2>>` | `$llmHistory` entries with `channel: 'scene'` |
+| `chat` | （预留，原 `<<llmchat>>` 已移除） | `$llmHistory` entries with `channel: 'chat'` |
+| `scene` | `<<hubscene>>`, `<<llmscene2>>` | `$llmHistory` entries with `channel: 'scene'` |
 | per-NPC | `<<npcchat>>` | `npc.dialogue` array on each NPC object |
 
 `PromptBuilder.getHistory(channel, limit)` filters by channel, so prompts only see the relevant context.

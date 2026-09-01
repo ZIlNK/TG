@@ -38,7 +38,7 @@ CSS modules (.css)     ──────┘
 - `llm-prompts.js` — `PromptBuilder`：用中文从游戏状态组装提示词
 - `llm-ui.js` — `NarrativeUI`：流式文本、打字指示器、错误横幅
 - `llm-structured.js` — `LLMStructured`：JSON 生成、解析、校验和 fallback
-- `llm-macros.js` — `<<llmscene>>`、`<<llmchat>>`、`<<llmconfig>>`、`<<llmscene2>>`、`<<llmoptions>>`、`<<llmnpc>>`、`<<llmquest>>`、`<<npcchat>>`
+- `llm-macros.js` — `<<llmconfig>>`、`<<llmscene2>>`、`<<llmnpc>>`、`<<llmquest>>`、`<<npcchat>>`、`<<hubscene>>`
 
 ## 状态模型
 
@@ -80,7 +80,7 @@ ModAPI.loadModData({
 ```
 Twee passage
     ↓
-<<llmscene>> / <<llmchat>> 宏
+<<hubscene>> 宏（流式叙事 + 动态选项）
     ↓
 PromptBuilder（从 $player、$time、$location、$world 组装系统提示词）
     ↓
@@ -93,7 +93,7 @@ Passage DOM
 
 **数据流（结构化内容生成）：**
 ```
-Macro call（<<llmscene2>> / <<llmoptions>> / <<llmnpc>> / <<llmquest>>）
+Macro call（<<llmscene2>> / <<hubscene>> / <<llmnpc>> / <<llmquest>>）
     ↓
 PromptBuilder（带 JSON schema 的中文提示词）
     ↓

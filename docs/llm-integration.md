@@ -40,38 +40,11 @@
 
 侧边栏菜单项，打开配置页面。
 
-### `<<llmscene "地点" "氛围" "描述">>`
-
-使用 LLM 生成一段动态场景描述，以流式文本渲染在 passage 中。
-
-示例：
-```twee
-:: MysteriousAlley
-!黑暗小巷
-
-<<llmscene "Alley" "tense" "你听到身后有脚步声。">>
-
-<<action "逃跑" "Street">>
-<<action "躲藏" "HideAction">>
-```
-
-### `<<llmchat "上下文">>`
-
-渲染一个自由对话界面，玩家可以输入消息，LLM 会根据当前情境用中文回复。
-
-示例：
-```twee
-:: TavernChat
-!生锈酒桶酒馆
-
-<<llmchat "你在一间拥挤的酒馆里。玩家可以与酒保或其他顾客交谈。">>
-
-<<action "离开" "Street">>
-```
-
 ### `<<llmconfig>>`
 
 渲染配置表单。通常用于 `LLMConfig` passage。
+
+流式叙事与动态选项能力目前由 `<<hubscene>>` 承载（见 `docs/llm-content.md`），自由对话由 `<<npcchat>>` 承载；旧的 `<<llmscene>>` / `<<llmchat>>` / `<<llmoptions>>` 宏已移除。
 
 ## Mod API 钩子
 
@@ -126,6 +99,6 @@ python -m http.server 8000
 
 ## 架构
 
-Passage → `<<llmscene>>` / `<<llmchat>>` 宏 → `PromptBuilder` → `LLMEngine` → 流式 fetch → `NarrativeUI` → SugarCube passage DOM。
+Passage → `<<hubscene>>` 宏 → `PromptBuilder` → `LLMEngine` → 流式 fetch → `NarrativeUI` → SugarCube passage DOM。
 
 所有状态保存在 `State.variables` 中，因此保存/读取、导出/导入和 mod 钩子无需额外接线即可工作。
