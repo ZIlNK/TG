@@ -1,0 +1,35 @@
+{
+  "version": "0.1.6",
+  "length": 90669,
+  "sha256": "E2D43C04B3593491AB41F5A448D73442B39E63666A74235DE2C46DECAB188517",
+  "files": [
+    {
+      "file": "lib/index.js",
+      "identical": true
+    },
+    {
+      "file": "lib/client.js",
+      "identical": true
+    },
+    {
+      "file": "package.json",
+      "identical": true
+    },
+    {
+      "file": "README.md",
+      "identical": true
+    },
+    {
+      "file": "scripts/install.ps1",
+      "identical": true
+    },
+    {
+      "file": "scripts/uninstall.ps1",
+      "identical": true
+    },
+    {
+      "file": "scripts/wait-for-unload.mjs",
+      "identical": true
+    }
+  ]
+}

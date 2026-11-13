@@ -1,0 +1,110 @@
+{
+  "name": "dsh-tg",
+  "version": "0.6.0",
+  "description": "TG 中文文字游戏：独立游戏面板与持久化规则引擎",
+  "type": "module",
+  "license": "UNLICENSED",
+  "main": "./lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "scripts/install.ps1",
+    "scripts/uninstall.ps1",
+    "scripts/wait-for-unload.mjs",
+    "scripts/manage-desktop.ps1"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-api-remotes",
+        "@deepseek-ai/dsh-client-ui-layout",
+        "@deepseek-ai/dsh-client-ui-sidebar"
+      ]
+    }
+  },
+  "scripts": {
+    "build": "tsc --noEmit && tsdown && node scripts/wrap-client.mjs && node --check lib/index.js && node --check lib/client.js",
+    "test": "tsx --test tests/*.test.ts",
+    "pack:plugin": "npm run build && node -e \"require('node:fs').mkdirSync('artifacts',{recursive:true})\" && npm pack --pack-destination artifacts",
+    "content:sync": "node scripts/sync-content.mjs",
+    "format": "prettier --write src tests scripts tsdown.config.ts tsconfig.json package.json"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "4.0.2 || 4.0.4 || 4.0.5",
+    "@deepseek-ai/dsh-agent": "0.1.5-rc.2 || 0.2.0-rc.2 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-api-gateway": "0.1.5-rc.2 || 0.2.0-rc.2 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.1.5-rc.2 || 0.2.0-rc.2 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "0.1.5-rc.2 || 0.2.0-rc.2 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "0.1.5-rc.2 || 0.2.0-rc.2 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-tools": "0.1.5-rc.2 || 0.2.0-rc.2 || 0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.1.5-rc.2 || 0.2.0-rc.2 || 0.2.1-rc.2"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-connection": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-layout": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-sidebar": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-slots": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session-persistence": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+    "@types/node": "22.19.0",
+    "@types/react": "18.3.26",
+    "prettier": "3.6.2",
+    "react": "18.3.1",
+    "tsdown": "0.16.5",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "zod": "4.4.3"
+  },
+  "overrides": {
+    "@deepseek-ai/dsh-credentials": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-connection": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-timeout": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-api-gateway": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-storage": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-agent": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-deque": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-sidebar": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-protocol": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-util-crypto": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-storage-domain": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-brand": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-code-runtime": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-typert-registry": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-layout": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-renderer": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-util-values": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-user-approval": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session-projection": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-invariants": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-settings": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-session-persistence": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-agent-loop": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-client-ui-cordis": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.2",
+    "@deepseek-ai/dsh-scope": "0.2.1-rc.2",
+    "zod": "4.4.3"
+  }
+}

@@ -1,0 +1,242 @@
+[
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-plan-1ac6b02b-292b-4f5a-9bae-f81ff9fa77e2",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-plan-1de6dbc8-c06f-4018-8f57-cf08a52cd175",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-plan-5e5bea0d-0a11-440a-b1c7-b5535af73ffc",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-plan-64158160-6ce9-40cd-a9cf-4eb96ca7c4c0",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-plan-71be1210-609a-4eaf-b9a0-419657f2ee87",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-plan-a8be4618-89de-4b72-94a0-19875f99d0a6",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-plan-bbbfbd40-b3b4-43ad-b7aa-cf0bd3a2fe0b",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-reply-2b6e7e71-b980-4060-a248-1e1b00fc6f36",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-reply-a8a479f5-477d-4d3b-bffc-2f1508d0ccec",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-scene-008b9ff3-660d-4348-9f49-c1e087ee6b03",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-scene-44f0bbda-8664-412f-956c-68cffc40f9d7",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-scene-53c6b4e2-2456-4fbb-ad7f-9265b1b8382b",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-scene-6c916a39-dafe-4f1f-8c79-2f84151544eb",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-scene-7f6b6e9b-44e6-47a4-a511-40ec3cc69dfb",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-scene-a8f922ae-0dfe-4b5d-9b8b-f69c04b19d75",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  },
+  {
+    "session": "tg-d1963341-403d-4127-9607-62f17bcab66b-scene-cd7854b3-eb87-44a1-9790-fff75f40c1d0",
+    "requests": 1,
+    "tools": [
+      "tg_propose_result"
+    ],
+    "ends": [
+      {
+        "turn": 1,
+        "reason": {
+          "kind": "completed"
+        }
+      }
+    ]
+  }
+]

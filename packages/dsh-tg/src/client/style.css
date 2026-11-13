@@ -1,0 +1,846 @@
+.tg-app {
+  --tg-bg: #171a20;
+  --tg-panel: #1e222b;
+  --tg-text: #e2dfd6;
+  --tg-muted: #929995;
+  --tg-accent: #d6b982;
+  --tg-line: #363b40;
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  height: 100%;
+  overflow: auto;
+  font:
+    14px/1.7 "Microsoft YaHei",
+    "PingFang SC",
+    sans-serif;
+  color-scheme: dark;
+}
+.tg-app[data-theme="light"] {
+  --tg-bg: #f4efe5;
+  --tg-panel: #ebe4d8;
+  --tg-text: #302f2b;
+  --tg-muted: #73776e;
+  --tg-accent: #876329;
+  --tg-line: #d5cbb8;
+  color-scheme: light;
+}
+.tg-app * {
+  box-sizing: border-box;
+}
+.tg-app button,
+.tg-app input,
+.tg-app textarea,
+.tg-app select {
+  font: inherit;
+}
+.tg-app button {
+  cursor: pointer;
+  background: transparent;
+  color: var(--tg-text);
+  border: 1px solid var(--tg-line);
+  border-radius: 5px;
+  padding: 8px 14px;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.tg-app button:hover {
+  border-color: var(--tg-accent);
+  background: var(--tg-panel);
+}
+.tg-app button:disabled {
+  opacity: 0.45;
+  cursor: wait;
+}
+.tg-app button:focus-visible,
+.tg-app input:focus-visible,
+.tg-app textarea:focus-visible,
+.tg-app select:focus-visible {
+  outline: 2px solid var(--tg-accent);
+  outline-offset: 3px;
+}
+.tg-app input,
+.tg-app textarea,
+.tg-app select {
+  color: var(--tg-text);
+  background: var(--tg-panel);
+  border: 1px solid var(--tg-line);
+  border-radius: 5px;
+  padding: 10px 12px;
+  width: 100%;
+  max-width: 100%;
+}
+.tg-app h1,
+.tg-app h2,
+.tg-app h3 {
+  color: inherit;
+}
+.tg-top {
+  height: 70px;
+  padding: 0 30px;
+  border-bottom: 1px solid var(--tg-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.tg-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--tg-accent);
+}
+.tg-brand strong {
+  font-size: 17px;
+  letter-spacing: 3px;
+}
+.tg-brand > span {
+  font-size: 11px;
+  color: var(--tg-muted);
+  padding-left: 12px;
+  border-left: 1px solid var(--tg-line);
+}
+.tg-time {
+  color: var(--tg-muted);
+  font-size: 12px;
+}
+.tg-layout {
+  display: grid;
+  grid-template-columns: 205px minmax(0, 1fr);
+  min-height: calc(100% - 70px);
+}
+.tg-side {
+  padding: 32px 24px;
+  border-right: 1px solid var(--tg-line);
+  background: var(--tg-panel);
+}
+.tg-eyebrow {
+  font:
+    10px/1.6 Consolas,
+    monospace;
+  letter-spacing: 2px;
+  color: var(--tg-muted);
+  text-transform: uppercase;
+}
+.tg-side h2 {
+  font-size: 22px;
+  letter-spacing: 2px;
+  margin: 12px 0 22px;
+}
+.tg-money {
+  font:
+    25px Georgia,
+    serif;
+  color: var(--tg-accent);
+  margin-bottom: 24px;
+}
+.tg-money span {
+  display: block;
+  font: 10px/2 sans-serif;
+  color: var(--tg-muted);
+}
+.tg-meter {
+  margin: 14px 0;
+}
+.tg-meter label {
+  font-size: 11px;
+  display: flex;
+  justify-content: space-between;
+}
+.tg-meter meter {
+  width: 100%;
+  height: 5px;
+  display: block;
+  margin-top: 8px;
+  appearance: none;
+}
+.tg-meter meter::-webkit-meter-bar {
+  background: var(--tg-bg);
+  border: 0;
+}
+.tg-meter meter::-webkit-meter-optimum-value {
+  background: var(--tg-accent);
+}
+.tg-side nav {
+  margin: 30px -10px;
+}
+.tg-side nav button {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  border: 0;
+  border-bottom: 1px solid var(--tg-line);
+  border-radius: 0;
+  padding: 11px 10px;
+  text-align: left;
+  font-size: 13px;
+}
+.tg-side nav button[aria-current="page"] {
+  color: var(--tg-accent);
+  background: var(--tg-bg);
+}
+.tg-side nav span {
+  opacity: 0.4;
+}
+.tg-caption {
+  color: var(--tg-muted);
+  font-size: 10px;
+}
+.tg-main {
+  padding: 38px clamp(20px, 5vw, 65px) 60px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  min-width: 0;
+}
+.tg-section-title h1 {
+  font:
+    32px/1.4 "Noto Serif SC",
+    "SimSun",
+    serif;
+  margin: 8px 0 28px;
+  letter-spacing: 3px;
+}
+.tg-landscape {
+  height: 150px;
+  position: relative;
+  overflow: hidden;
+  background: #252e3b;
+  border: 1px solid #414850;
+  margin-bottom: 32px;
+  image-rendering: pixelated;
+}
+.tg-moon {
+  position: absolute;
+  left: 18%;
+  top: 22px;
+  width: 24px;
+  height: 24px;
+  background: #dacdaa;
+  box-shadow:
+    4px 0 #dacdaa,
+    -4px 0 #dacdaa,
+    0 4px #dacdaa,
+    0 -4px #dacdaa;
+}
+.tg-city {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 90px;
+  background: linear-gradient(
+    90deg,
+    #19212b 0 10%,
+    transparent 10% 13%,
+    #17202a 13% 30%,
+    transparent 30% 34%,
+    #18212b 34% 42%,
+    transparent 42% 45%,
+    #151e29 45% 68%,
+    transparent 68% 73%,
+    #18212b 73% 100%
+  );
+  clip-path: polygon(
+    0 25%,
+    10% 25%,
+    10% 55%,
+    18% 55%,
+    18% 0,
+    29% 0,
+    29% 45%,
+    40% 45%,
+    40% 20%,
+    48% 20%,
+    48% 55%,
+    58% 55%,
+    58% 15%,
+    67% 15%,
+    67% 40%,
+    78% 40%,
+    78% 0,
+    86% 0,
+    86% 50%,
+    100% 50%,
+    100% 100%,
+    0 100%
+  );
+}
+.tg-landscape > span {
+  position: absolute;
+  bottom: 15px;
+  right: 18px;
+  letter-spacing: 5px;
+  color: #adad9d;
+  font-size: 10px;
+}
+.tg-prose {
+  font:
+    16px/2.2 "Noto Serif SC",
+    "SimSun",
+    serif;
+  letter-spacing: 0.4px;
+  white-space: pre-wrap;
+}
+.tg-prose p {
+  margin: 0 0 18px;
+}
+.tg-status {
+  white-space: pre-wrap;
+  font-size: 12px;
+  color: var(--tg-muted);
+  border-left: 2px solid var(--tg-accent);
+  padding: 10px 14px;
+  margin: 20px 0;
+}
+.tg-status button {
+  display: block;
+  margin-top: 8px;
+}
+.tg-options {
+  margin: 24px 0;
+  display: grid;
+  gap: 9px;
+}
+.tg-options button {
+  text-align: left;
+  display: flex;
+  gap: 15px;
+  padding: 15px;
+  background: var(--tg-panel);
+  align-items: center;
+}
+.tg-options button > span {
+  font:
+    11px Consolas,
+    monospace;
+  color: var(--tg-accent);
+}
+.tg-options button > b {
+  margin-left: auto;
+  color: var(--tg-muted);
+}
+.tg-composer {
+  margin-top: 28px;
+  border-top: 1px solid var(--tg-line);
+  padding-top: 22px;
+}
+.tg-composer label {
+  display: block;
+  font-size: 12px;
+  color: var(--tg-muted);
+  margin-bottom: 10px;
+}
+.tg-composer textarea {
+  min-height: 95px;
+  resize: vertical;
+}
+.tg-app .tg-primary {
+  background: var(--tg-accent);
+  color: var(--tg-bg);
+  border-color: var(--tg-accent);
+  font-weight: bold;
+  padding: 11px 22px;
+}
+.tg-composer .tg-primary {
+  margin-top: 10px;
+  float: right;
+}
+.tg-list > div {
+  padding: 18px 0;
+  border-bottom: 1px solid var(--tg-line);
+}
+.tg-list h3 {
+  margin: 0;
+  font-size: 15px;
+}
+.tg-list h3 span {
+  float: right;
+  color: var(--tg-accent);
+  font-size: 11px;
+  font-weight: normal;
+}
+.tg-list p {
+  white-space: pre-wrap;
+}
+.tg-list small,
+.tg-muted {
+  color: var(--tg-muted);
+  font-size: 12px;
+}
+.tg-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+  gap: 10px;
+}
+.tg-grid > div {
+  border-bottom: 1px solid var(--tg-line);
+  padding: 14px 0;
+}
+.tg-grid span {
+  display: block;
+  color: var(--tg-muted);
+  font-size: 12px;
+}
+.tg-grid strong {
+  font:
+    25px/1.8 Georgia,
+    serif;
+}
+.tg-saves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 16px;
+}
+.tg-saves > div {
+  border: 1px solid var(--tg-line);
+  padding: 20px;
+  border-radius: 6px;
+}
+.tg-saves small {
+  color: var(--tg-accent);
+  font:
+    11px Consolas,
+    monospace;
+}
+.tg-saves p {
+  color: var(--tg-muted);
+  font-size: 11px;
+}
+.tg-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.tg-row button,
+.tg-file {
+  font-size: 12px;
+  padding: 5px 9px;
+}
+.tg-file {
+  cursor: pointer;
+  border: 1px solid var(--tg-line);
+  border-radius: 5px;
+}
+.tg-file input {
+  display: none;
+}
+.tg-settings {
+  max-width: 450px;
+  display: grid;
+  gap: 20px;
+}
+.tg-settings label {
+  display: grid;
+  gap: 8px;
+}
+.tg-error {
+  padding: 14px 24px;
+  background: #512f30;
+  color: #f0d4c2;
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  white-space: pre-wrap;
+}
+.tg-error button {
+  margin-left: auto;
+}
+.tg-start {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 65px 40px;
+}
+.tg-start h1 {
+  font:
+    42px/1.6 "Noto Serif SC",
+    "SimSun",
+    serif;
+  letter-spacing: 3px;
+  margin: 20px 0;
+}
+.tg-start > p {
+  color: var(--tg-muted);
+}
+.tg-start label {
+  display: block;
+  max-width: 380px;
+  margin: 22px 0;
+  font-size: 12px;
+}
+.tg-start label input,
+.tg-start label select {
+  display: block;
+  margin-top: 8px;
+}
+.tg-continue {
+  margin-top: 45px;
+  border-top: 1px solid var(--tg-line);
+  padding-top: 20px;
+}
+.tg-continue button {
+  display: block;
+  width: 100%;
+  margin: 8px 0;
+  text-align: left;
+}
+.tg-continue small {
+  float: right;
+  color: var(--tg-muted);
+}
+@media (max-width: 700px) {
+  .tg-layout {
+    grid-template-columns: 1fr;
+  }
+  .tg-side {
+    padding: 15px 20px;
+    border-right: 0;
+    border-bottom: 1px solid var(--tg-line);
+  }
+  .tg-side h2,
+  .tg-money,
+  .tg-meter,
+  .tg-caption,
+  .tg-side > .tg-eyebrow {
+    display: none;
+  }
+  .tg-side nav {
+    display: flex;
+    overflow-x: auto;
+    margin: 0;
+  }
+  .tg-side nav button {
+    white-space: nowrap;
+    justify-content: center;
+    border-bottom: 0;
+    padding: 9px 13px;
+  }
+  .tg-side nav span {
+    display: none;
+  }
+  .tg-top {
+    padding: 0 18px;
+  }
+  .tg-brand > span {
+    display: none;
+  }
+  .tg-main {
+    padding: 28px 20px;
+  }
+  .tg-start {
+    padding: 35px 24px;
+  }
+  .tg-start h1 {
+    font-size: 30px;
+  }
+  .tg-landscape {
+    height: 115px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tg-app button {
+    transition: none;
+  }
+}
+.tg-app {
+  --tg-bg: var(--bg-body);
+  --tg-panel: var(--bg-ui);
+  --tg-text: var(--text-primary);
+  --tg-muted: var(--text-muted);
+  --tg-line: var(--border-color);
+}
+.tg-app[data-theme="light"] {
+  --tg-bg: var(--bg-body);
+  --tg-panel: var(--bg-ui);
+  --tg-text: var(--text-primary);
+  --tg-muted: var(--text-muted);
+  --tg-line: var(--border-color);
+}
+.tg-landscape img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.55;
+  image-rendering: pixelated;
+}
+
+.tg-traces select {
+  width: 100%;
+  margin: 8px 0 16px;
+}
+.tg-trace-attempt,
+.tg-trace-settlement {
+  border: 1px solid var(--tg-line);
+  padding: 16px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.tg-traces summary {
+  cursor: pointer;
+  line-height: 1.7;
+}
+.tg-trace-event {
+  padding: 8px 0;
+}
+.tg-trace-json {
+  max-height: 480px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  line-height: 1.6;
+  padding: 12px;
+  background: rgba(128, 128, 128, 0.08);
+}
+
+/* Compact event ledger and inspector, following Harness trajectory layout. */
+.tg-trajectory {
+  border: 1px solid var(--tg-line);
+  margin-top: 12px;
+  background: var(--tg-bg);
+}
+.tg-trajectory-toolbar {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--tg-muted);
+}
+.tg-trajectory-toolbar > input {
+  flex: 1;
+  min-width: 160px;
+  padding: 6px 10px;
+}
+.tg-trajectory-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tg-trajectory-toolbar input[type="checkbox"] {
+  width: auto;
+}
+.tg-trajectory-timeline {
+  height: 32px;
+  position: relative;
+  margin: 0 12px;
+  border-bottom: 1px solid var(--tg-line);
+}
+.tg-app .tg-trajectory-timeline button {
+  position: absolute;
+  top: 7px;
+  padding: 0;
+  width: 9px;
+  height: 18px;
+  border-radius: 2px;
+  background: #7793c8;
+  border: 0;
+  min-width: 0;
+}
+.tg-app .tg-trajectory-timeline button[data-kind="tool"] {
+  background: #b39a6c;
+}
+.tg-app .tg-trajectory-timeline button[data-kind="assistant"] {
+  background: #7ba293;
+}
+.tg-app .tg-trajectory-timeline button[aria-pressed="true"] {
+  outline: 2px solid var(--tg-text);
+  outline-offset: 2px;
+  z-index: 1;
+}
+.tg-trajectory-split {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, 0.9fr);
+}
+.tg-trajectory-table-wrap {
+  overflow: auto;
+  max-height: 520px;
+}
+.tg-trajectory-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+  font-size: 12px;
+}
+.tg-trajectory-table th {
+  text-align: left;
+  position: sticky;
+  top: 0;
+  background: var(--tg-panel);
+  color: var(--tg-muted);
+  font-weight: 500;
+  z-index: 1;
+}
+.tg-trajectory-table th:first-child {
+  width: 38px;
+}
+.tg-trajectory-table th:nth-child(2) {
+  width: 76px;
+}
+.tg-trajectory-table th:last-child {
+  width: 52px;
+}
+.tg-trajectory-table th,
+.tg-trajectory-table td {
+  padding: 6px;
+  border-bottom: 1px solid var(--tg-line);
+}
+.tg-trajectory-table tr[data-selected="true"] {
+  background: color-mix(in srgb, var(--tg-accent) 14%, transparent);
+}
+.tg-trajectory-table tr[data-error="true"] {
+  color: #d98585;
+}
+.tg-app .tg-trajectory-table td button {
+  width: 100%;
+  display: block;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  border-radius: 0;
+  font: inherit;
+}
+.tg-trajectory-detail {
+  border-left: 1px solid var(--tg-line);
+  padding: 12px;
+  overflow: auto;
+  max-height: 520px;
+  min-width: 0;
+}
+.tg-trajectory-detail header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+}
+.tg-trajectory-detail header span {
+  color: var(--tg-muted);
+}
+.tg-trajectory-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--tg-line);
+  margin: 12px 0;
+}
+.tg-app .tg-trajectory-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  font-size: 12px;
+  padding: 6px;
+  background: transparent;
+}
+.tg-app .tg-trajectory-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--tg-accent);
+  color: var(--tg-accent);
+}
+.tg-trajectory-payload {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font:
+    12px/1.7 Consolas,
+    "Microsoft YaHei",
+    monospace;
+  margin: 8px 0;
+}
+.tg-trajectory-detail h5 {
+  margin: 16px 0 6px;
+  color: var(--tg-muted);
+}
+@media (max-width: 1050px) {
+  .tg-trajectory-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .tg-trajectory-detail {
+    border-left: 0;
+    border-top: 1px solid var(--tg-line);
+  }
+}
+
+.tg-stage-badge {
+  display: inline-block;
+  padding: 2px 9px;
+  margin-right: 6px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font-weight: 600;
+}
+.tg-stage-badge[data-stage="plan"] {
+  color: var(--tg-accent);
+}
+.tg-stage-badge[data-stage="reply"] {
+  border-style: dashed;
+}
+.tg-stage-badge[data-stage="scene"] {
+  border-style: double;
+}
+.tg-trajectory-stage {
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--tg-line);
+  color: var(--tg-accent);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tg-dialogue-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  border-bottom: 1px solid var(--tg-line);
+  padding-bottom: 20px;
+}
+.tg-dialogue-header h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+}
+.tg-dialogue-messages {
+  max-height: 52vh;
+  min-height: 180px;
+  overflow-y: auto;
+  padding: 24px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.tg-dialogue-message {
+  max-width: 90%;
+  align-self: flex-start;
+  border-left: 2px solid var(--tg-accent);
+  background: var(--tg-panel);
+  padding: 14px 18px;
+}
+.tg-dialogue-message[data-speaker="player"] {
+  align-self: flex-end;
+  border-left: 0;
+  border-right: 2px solid var(--tg-muted);
+}
+.tg-dialogue-message header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+}
+.tg-dialogue-message small {
+  color: var(--tg-muted);
+}
+.tg-dialogue-message p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin: 8px 0 0;
+}
+@media (max-width: 620px) {
+  .tg-dialogue-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .tg-dialogue-message {
+    max-width: 96%;
+  }
+}

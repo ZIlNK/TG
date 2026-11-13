@@ -1,0 +1,16 @@
+{
+  "version": "0.1.6",
+  "comparedWith": "artifacts/dsh-tg-0.1.4.tgz",
+  "files": [
+    {
+      "file": "lib/index.js",
+      "sameAsTestedV014": true,
+      "sha256": "d2cb65ce1e0f77332602e763c33b10ce511009cb930bf7465894718ac3381ef3"
+    },
+    {
+      "file": "lib/client.js",
+      "sameAsTestedV014": true,
+      "sha256": "61cf121cfe90fd37f17671cefee54758a2734c5c16a9ece8bba4bd65b153e12d"
+    }
+  ]
+}
