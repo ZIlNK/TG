@@ -40,11 +40,12 @@ npm run content:sync
 ## 插件架构与边界
 
 ```
-src/core/   纯规则：schema（Zod 合同）、rules（玩法规则）、service（状态机/串行队列/收据）、
+packages/dsh-tg/src/
+  core/     纯规则：schema（Zod 合同）、rules（玩法规则）、service（状态机/串行队列/收据）、
             context（知情范围裁剪）、world（初始世界）
-src/host/   Cordis 适配：ModelRunner（宿主 Agent + 工具协议）、Remote、存储域、外部提示词
-src/client/ React 面板（现场/背包/角色/地图/任务日志/调用记录/存档/设置）
-src/rpc.ts  一份 Zod 表同时生成 Host descriptor 与 Client 类型
+  host/     Cordis 适配：ModelRunner（宿主 Agent + 工具协议）、Remote、存储域、外部提示词
+  client/   React 面板（现场/背包/角色/地图/任务日志/调用记录/存档/设置）
+  rpc.ts    一份 Zod 表同时生成 Host descriptor 与 Client 类型
 ```
 
 必须守住的边界：
