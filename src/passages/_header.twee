@@ -14,10 +14,7 @@
       if (!State.variables.llmConfig) {
         State.variables.llmConfig = {
           enabled: true,
-          provider: 'ollama',
-          endpoint: 'http://localhost:11434',
           model: 'llama3.2',
-          apiKey: '',
           maxTokens: 512,
           temperature: 0.8
         };
@@ -41,6 +38,9 @@
       if (!State.variables.npcs) {
         State.variables.npcs = {};
       }
+      if (!State.variables.proactiveDialogueUsage) {
+        State.variables.proactiveDialogueUsage = {};
+      }
       if (!State.variables.quests) {
         State.variables.quests = {};
       }
@@ -55,6 +55,19 @@
       }
       if (typeof State.variables.llmGatewayTarget === 'undefined') {
         State.variables.llmGatewayTarget = '';
+      }
+      if (typeof State.variables.dialogueReturn === 'undefined') {
+        State.variables.dialogueReturn = null;
+      }
+      if (typeof State.variables.questLogReturn === 'undefined') {
+        State.variables.questLogReturn = null;
+      }
+      if (typeof RegionSystem !== 'undefined' && RegionSystem.ensure) {
+        RegionSystem.ensure();
+      }
+      if (typeof NPCAgency !== 'undefined') NPCAgency.ensure();
+      if (typeof TaskEngine !== 'undefined' && TaskEngine.ensure) {
+        TaskEngine.ensure();
       }
 
       // Playability patch: ensure new $game fields exist in older saves.
@@ -95,6 +108,13 @@
             if (typeof initRelationship === 'function') initRelationship(State.variables.npcs[nid]);
           }
         }
+      }
+      // Structured content (world info / locations / character cards)
+      if (typeof GameContent !== 'undefined' && GameContent.ensure) {
+        GameContent.ensure();
+      }
+      if (typeof NPCState !== 'undefined' && NPCState.ensureAll) {
+        NPCState.ensureAll();
       }
     }
   <</script>>

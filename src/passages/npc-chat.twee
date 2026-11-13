@@ -1,32 +1,44 @@
 :: NPCChat
-!与 <<print $npcs[$activeNPCId].name>> 交谈
-
+<<nobr>>
 <<set _npc to $npcs[$activeNPCId]>>
-
-你正在和 <<print _npc.name>> 交谈，TA 是 <<print _npc.role>>。
-
-<<if _npc.relationship>>
-  <<set _relTier to getRelationshipTier(_npc)>>
-  <<set _relValue to _npc.relationship.value || 0>>
-  <<set _relProgress to Math.round(getRelationshipProgress(_npc) * 100)>>
-  <div class="npc-relationship-badge">
-    <span class="npc-rel-tier">[<<print _relTier>>]</span>
-    <div class="stat-bar" style="margin: 4px 0;">
-      <div class="stat-bar-label"><span>关系</span><span><<print _relValue>>/100</span></div>
-      <div class="stat-bar-track"><div class="stat-bar-fill stat-relationship" @style="'width: ' + _relProgress + '%;'"></div></div>
-    </div>
-  </div>
-<</if>>
-
-<<npcchat $activeNPCId>>
-
-<<if (_npc.disposition || 0) gte -5>>
-  <<action "请求任务" "RequestQuest" "看看 TA 是否需要帮助">>
-  <<action "提交任务" "TurnInQuest" "交还已完成的任务">>
+<<if not _npc>>
+  <<set $activeNPCId to "">>
+  <div class="llm-error-banner">对话对象不存在或已失效，无法进入对话。</div>
+  <<action "返回当前场景" $location "返回所在地点">>
 <<else>>
-  <p>对方看起来不太愿意和你交谈。</p>
+<div class="npc-chat-page">
+  <header class="npc-chat-header">
+    <h1 class="npc-chat-title">与 <<llmtext _npc.name>> 交谈</h1>
+    <p class="npc-chat-intro">你正在和 <<llmtext _npc.name>> 交谈，TA 是 <<llmtext _npc.role>>。</p>
+    <<if _npc.relationship>>
+      <<set _relTier to getRelationshipTier(_npc)>>
+      <<set _relValue to _npc.relationship.value || 0>>
+      <<set _relProgress to Math.round(getRelationshipProgress(_npc) * 100)>>
+      <div class="npc-relationship-badge">
+        <span class="npc-rel-tier" id="npc-rel-tier">[<<print _relTier>>]</span>
+        <div class="stat-bar">
+          <div class="stat-bar-label"><span>关系</span><span id="npc-rel-value"><<print _relValue>>/100</span></div>
+          <div class="stat-bar-track"><div class="stat-bar-fill stat-relationship" id="npc-rel-fill" @style="'width: ' + _relProgress + '%;'"></div></div>
+        </div>
+      </div>
+    <</if>>
+  </header>
+
+  <<npcchat $activeNPCId>>
+
+  <div class="npc-chat-actions">
+    <<if (_npc.disposition || 0) gte -5>>
+      <<action "请求任务" "RequestQuest" "看看 TA 是否需要帮助">>
+      <<questturnins $activeNPCId>>
+      <<action "查看可交付任务" "TurnInQuest" "检查可以交给这位 NPC 的任务">>
+    <<else>>
+      <p>对方看起来不太愿意和你交谈。</p>
+    <</if>>
+    <<enddialogue>>
+  </div>
+</div>
 <</if>>
-<<action "结束对话" $location "回到原处">>
+<</nobr>>
 
 :: MeetNPC
 !偶遇
@@ -42,12 +54,12 @@
 :: RequestQuest
 !请求任务
 
-<<if $activeNPCId neq "">>
+<<if $activeNPCId neq "" and $npcs[$activeNPCId]>>
   <<set _npc to $npcs[$activeNPCId]>>
   <<if (_npc.disposition || 0) gte -5>>
     <<llmquest $activeNPCId "一个本地的、只有玩家能解决的问题">>
   <<else>>
-    <p><<print _npc.name>> 冷冷地看了你一眼，似乎不想给你任务。</p>
+    <p><<llmtext _npc.name>> 冷冷地看了你一眼，似乎不想给你任务。</p>
   <</if>>
 <<else>>
   附近没有可以交谈的人。
@@ -61,21 +73,19 @@
 :: TurnInQuest
 !提交任务
 
-<<if $activeQuestId and $quests[$activeQuestId] and $quests[$activeQuestId].status is "active">>
-  <<set _q to $quests[$activeQuestId]>>
-  <<set _allDone to true>>
-  <<for _obj range _q.objectives>>
-    <<if not _obj.completed>><<set _allDone to false>><</if>>
+<<set _ready to (typeof TaskEngine !== "undefined") ? TaskEngine.readyForNPC($activeNPCId) : []>>
+<<if _ready.length>>
+  <<for _q range _ready>>
+    <<set _qid to _q.id>><<capture _qid>>
+      <div class="llm-quest-card">
+        <h3><<llmtext _q.title>></h3>
+        <p><<llmtext _q.description>></p>
+        <<link "交付任务">><<set _result to TaskEngine.turnIn(_qid, {npcId: $activeNPCId})>><<if _result.ok>><<goto "NPCChat">><<else>><span class="llm-error-banner"><<llmtext _result.error>></span><</if>><</link>>
+      </div>
+    <</capture>>
   <</for>>
-  <<if _allDone>>
-    <<set _msgs to applyQuestRewards(_q)>>
-    任务完成！<<print _q.title>>
-    <<if _msgs.length gt 0>><p>获得奖励：<<print _msgs.join("、")>></p><</if>>
-  <<else>>
-    任务还没完成。继续努力吧。
-  <</if>>
 <<else>>
-  你没有可提交的任务。
+  你没有可以交给这位 NPC 的任务。
 <</if>>
 
 <<action "返回" "NPCChat">>

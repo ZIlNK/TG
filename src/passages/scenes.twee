@@ -1,17 +1,22 @@
 :: Bedroom
-<<set $location to "Bedroom">>
-!你的卧室
+<<run RegionSystem.enterLocation("Bedroom")>>
+<div class="scene-shell">
+<header class="scene-header">
+  <h1 class="scene-title">你的卧室</h1>
+  <div class="scene-location"><<print RegionSystem.formatPosition()>></div>
+</header>
 
-<<sceneimg "Bedroom">>
+<div class="scene-media"><<sceneimg "Bedroom">></div>
 
 <<hubscene "Bedroom" "calm" "不大但整洁的卧室，靠墙一张床，书桌上散落着笔记，阳光透过窗帘">>
 
-你也可以：
-
+<div class="scene-fixed-actions">
 <<action "睡一会儿" "SleepAction" "恢复体力，推进时间">>
 <<action "学习或工作" "StudyAction" "降低压力，消耗体力">>
-<<action "去街上" "Street" "离开公寓">>
+<<moveaction "去街上" "Street" "street_main" "离开公寓">>
 <<action "打开设置" "Settings" "保存、读取或配置">>
+</div>
+</div>
 
 :: SleepAction
 <<if $player.stamina gte 90>>
@@ -67,11 +72,15 @@
 <</if>>
 
 :: Street
-<<set $location to "Street">>
+<<run RegionSystem.enterLocation("Street")>>
 <<run completeTutorialObjective(1)>>
-!城市街道
+<div class="scene-shell">
+<header class="scene-header">
+  <h1 class="scene-title">城市街道</h1>
+  <div class="scene-location"><<print RegionSystem.formatPosition()>></div>
+</header>
 
-<<sceneimg "Street">>
+<div class="scene-media"><<sceneimg "Street">></div>
 
 <<if $time.hour gte 22 or $time.hour lt 6>>
   <<hubscene "Street" "dangerous" "深夜的街道，阴影中传来可疑的声响，醉汉在巷口徘徊">>
@@ -81,20 +90,25 @@
   <<hubscene "Street" "neutral" "车水马龙的城市街道，霓虹灯闪烁，远处飘来街头小吃的香味">>
 <</if>>
 
-你也可以：
-
-<<action "去公园" "Park" "一个更安静的地方">>
-<<action "去商店" "Shop" "购买补给">>
-<<action "回家" "Bedroom" "回到公寓">>
+<div class="scene-fixed-actions">
+<<moveaction "去公园" "Park" "park_entrance" "一个更安静的地方">>
+<<moveaction "去商店" "Shop" "shop_entrance" "购买补给">>
+<<moveaction "回家" "Bedroom" "bedroom_main" "回到公寓">>
 <<if getSkillLevel("运动") gte 20>>
   <<action "快速逃离" "FastEscape" "利用敏捷身法快速离开险境">>
 <</if>>
+</div>
+</div>
 
 :: Park
-<<set $location to "Park">>
-!中央公园
+<<run RegionSystem.enterLocation("Park")>>
+<div class="scene-shell">
+<header class="scene-header">
+  <h1 class="scene-title">中央公园</h1>
+  <div class="scene-location"><<print RegionSystem.formatPosition()>></div>
+</header>
 
-<<sceneimg "Park">>
+<div class="scene-media"><<sceneimg "Park">></div>
 
 <<if $time.hour gte 22 or $time.hour lt 6>>
   <<hubscene "Park" "eerie" "夜晚的公园，喷泉停止涌动，树影在风中摇曳，偶尔有夜行动物穿过灌木">>
@@ -104,14 +118,23 @@
   <<hubscene "Park" "peaceful" "树木沿小径排列，长椅上坐着几个人，公园中央的喷泉汩汩作响">>
 <</if>>
 
-你也可以：
-
+<div class="scene-fixed-actions">
+<<if $position.areaId is "park_entrance">>
+  <<link "与晚晴交谈">><<run DialogueTool.invoke({ npcName: "林晚晴", openingLine: "你好。" }, { confirm: false, source: "park-fixed-entry" })>><</link>>
+  <<link "与亨特交谈">>
+    <<set _hunter to NPCState.resolveSpeaker("亨特").runtime>>
+    <<run DialogueTool.invoke({ npcName: "亨特", openingLine: _hunter ? "你好。" : $characterCards.hunter.greeting }, { confirm: false, source: "park-hunter-fixed-entry" })>>
+  <</link>>
+<</if>>
+<<include "QuestPhotoActions">>
 <<action "在长椅上休息" "RestAction" "恢复体力">>
 <<action "慢跑" "JogAction" "增强体力，消耗能量">>
-<<action "返回街道" "Street">>
+<<moveaction "返回街道" "Street" "street_main">>
 <<if getSkillLevel("感知") gte 15>>
   <<action "观察自然" "ObserveNature" "训练你的感知能力">>
 <</if>>
+</div>
+</div>
 
 :: RestAction
 <<set $player.stamina to Math.min($player.maxStamina, $player.stamina + 25)>>
@@ -174,10 +197,14 @@
 <<action "离开" "Park">>
 
 :: Shop
-<<set $location to "Shop">>
-!街角小店
+<<run RegionSystem.enterLocation("Shop")>>
+<div class="scene-shell">
+<header class="scene-header">
+  <h1 class="scene-title">街角小店</h1>
+  <div class="scene-location"><<print RegionSystem.formatPosition()>></div>
+</header>
 
-<<sceneimg "Shop">>
+<div class="scene-media"><<sceneimg "Shop">></div>
 
 <<if $time.hour gte 22 or $time.hour lt 6>>
   <<hubscene "Shop" "closed" "小店已经拉下铁门，橱窗里只剩一盏昏暗的灯">>
@@ -187,11 +214,12 @@
   <<hubscene "Shop" "mundane" "货架上摆满零食、饮料和基础用品，店员在柜台后点头致意">>
 <</if>>
 
-你也可以：
-
+<div class="scene-fixed-actions">
 <<action "买食物（$5）" "BuyFoodAction" "恢复健康和体力">>
 <<action "浏览商品" "BrowseAction" "四处看看">>
-<<action "离开" "Street">>
+<<moveaction "离开" "Street" "street_main">>
+</div>
+</div>
 
 :: BuyFoodAction
 <<if $player.money gte 5>>
@@ -221,9 +249,9 @@
 
 你身上带着：
 
-<<print formatInventory()>>
+<<npcinventory>>
 
-<<action "返回" "Start">>
+<<action "返回" "back" "回到原处">>
 
 :: About
 !关于
@@ -241,7 +269,7 @@
 
 所有内容均为占位内容。
 
-<<action "返回" "Start">>
+<<action "返回" "back" "回到原处">>
 
 :: DayReset
 !新的一天
@@ -265,7 +293,7 @@
 
 这座城市还在运转，但你的故事暂时画上了句号。
 
-<<link "重新开始">>
+<div class="page-actions"><<link "重新开始">>
   <<set $player = {
     name: "Player",
     health: 100,
@@ -287,6 +315,13 @@
   <<set $time = { hour: 8, minute: 0, day: 1, dayName: "Monday" }>>
   <<set $world = { weather: "clear", temperature: 22 }>>
   <<set $location to "Bedroom">>
+  <<run
+    delete State.variables.npcAgency;
+    delete State.variables.characterCards;
+    delete State.variables.proactiveDialogueUsage;
+    delete State.variables.proactiveDialogueUsageDay;
+    State.variables.position = { locationId: "Bedroom", areaId: "bedroom_main" };
+  >>
   <<set $quests = {} >>
   <<set $activeQuestId to "" >>
   <<set $npcs = {} >>
@@ -304,4 +339,24 @@
   <<set $game.evicted to false >>
   <<set $game.rentDueDay to 7 >>
   <<goto "Start">>
-<</link>>
+<</link>></div>
+
+:: QuestPhotoActions
+<<set _photoQuest to TaskEngine.photoQuest()>>
+<<if _photoQuest and _photoQuest.status is "active">>
+  <<if $position.areaId is "park_path">>
+    <<link "寻找晚晴遗失的照片">>
+      <<set _photoResult to TaskEngine.searchPhoto()>>
+      <<run showFeedback(_photoResult.ok ? _photoResult.messages : [_photoResult.error])>>
+      <<goto "AreaScene">>
+    <</link>>
+  <<else>>
+    <<moveaction "去林间小径寻找照片" "Park" "park_path">>
+  <</if>>
+<<elseif _photoQuest and _photoQuest.status is "ready_to_turn_in">>
+  <p>你已收好照片凭证，请当面交还晚晴。</p>
+  <<if $position.areaId isnot "park_entrance">>
+    <<moveaction "回公园入口找晚晴" "Park" "park_entrance">>
+  <</if>>
+  <<link "前往交还照片">><<run TaskEngine.navigateToTurnIn(TaskEngine.photoQuest().id)>><</link>>
+<</if>>

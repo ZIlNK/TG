@@ -17,6 +17,14 @@
     return document.body;
   }
 
+  // Normalize double-escaped line breaks and <br> in display prose only.
+  // Keep JSON/tool transport and diagnostic records untouched; never execute HTML.
+  function normalizeLLMText(text) {
+    if (!text || typeof text !== 'string') return text;
+    return text.replace(/\\r\\n|\\n|\\r/g, '\n').replace(/\r\n?/g, '\n').replace(/<br\s*\/?>/gi, '\n');
+  }
+  window.normalizeLLMText = normalizeLLMText;
+
   window.NarrativeUI = {
     createChatContainer: function (parent) {
       var container;
@@ -32,7 +40,7 @@
       return chat;
     },
 
-    appendMessage: function (container, role, text) {
+    appendMessage: function (container, role, text, speakerLabel) {
       if (typeof container === 'string') {
         container = document.getElementById(container);
       }
@@ -40,9 +48,9 @@
 
       var msg = createElement('div', 'llm-message llm-message-' + role, container);
       var roleLabel = createElement('div', 'llm-message-role', msg);
-      roleLabel.textContent = role === 'user' ? '你' : '叙述者';
+      roleLabel.textContent = speakerLabel || (role === 'user' ? '你' : '叙述者');
       var content = createElement('div', '', msg);
-      content.textContent = text;
+      content.textContent = normalizeLLMText(text);
       container.scrollTop = container.scrollHeight;
       return msg;
     },
@@ -126,27 +134,30 @@
         return;
       }
 
-      var msg = createElement('div', 'llm-message llm-message-assistant', container);
-      var roleLabel = createElement('div', 'llm-message-role', msg);
-      roleLabel.textContent = '叙述者';
+      var narrative = options.variant === 'narrative';
+      var msg = createElement('div', narrative ? 'llm-narrative-message' : 'llm-message llm-message-assistant', container);
+      if (!narrative) {
+        var roleLabel = createElement('div', 'llm-message-role', msg);
+        roleLabel.textContent = options.roleLabel || '叙述者';
+      }
       var content = createElement('div', 'llm-streaming-text llm-streaming-cursor', msg);
       container.scrollTop = container.scrollHeight;
 
       var typing = this.showTyping(container);
 
-      promiseFactory({
+      return promiseFactory({
         onChunk: function (chunk, fullText) {
           if (typing) {
             typing.remove();
             typing = null;
           }
-          content.textContent = fullText;
+          content.textContent = normalizeLLMText(fullText);
           container.scrollTop = container.scrollHeight;
         }
       }).then(function (fullText) {
         if (typing) typing.remove();
         content.classList.remove('llm-streaming-cursor');
-        if (typeof options.onComplete === 'function') options.onComplete(fullText);
+        if (typeof options.onComplete === 'function') options.onComplete(normalizeLLMText(fullText));
       }).catch(function (err) {
         if (typing) typing.remove();
         content.classList.remove('llm-streaming-cursor');
@@ -192,6 +203,14 @@
 
   if (typeof whenSugarCubeReady !== 'undefined') {
     whenSugarCubeReady(function () {
+      // Generated prose is data: never pass it through Wikifier or innerHTML.
+      Macro.add('llmtext', {
+        handler: function () {
+          var value = this.args[0];
+          var text = value == null ? '' : String(value);
+          this.output.appendChild(document.createTextNode(normalizeLLMText(text)));
+        }
+      });
       console.log('[NarrativeUI] Loaded.');
     });
   }

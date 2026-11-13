@@ -39,4 +39,4 @@
   已加载 Mod 数量：<strong><<print $modRegistry.length>></strong>
 </div>
 
-<<action "返回" "Settings">>
+<<action "返回" "back" "回到原处">>

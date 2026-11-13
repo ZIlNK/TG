@@ -1,10 +1,36 @@
-/* LLM Engine: provider-agnostic client for Ollama and OpenAI-compatible APIs */
+/* LLM Engine: frontend client backed by the server-side persisted configuration. */
 (function () {
   'use strict';
 
   var ACTIVE_REQUEST = null;
+  var BACKEND_CONFIG = null;
+  var CONFIG_PROMISE = null;
+
+  function createRequestId() {
+    if (window.crypto && typeof window.crypto.randomUUID === 'function') return window.crypto.randomUUID();
+    return 'llm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function logEvent(level, event, data) {
+    if (typeof window.log === 'function') window.log(level, event, data);
+  }
+
+  function trace(requestId, data) {
+    try { if (window.LLMTrace) window.LLMTrace.record(requestId, data); } catch (_) { /* diagnostics only */ }
+  }
+
+  function requestContext() {
+    var context = {};
+    try {
+      if (typeof passage === 'function') context.passage = passage();
+      if (typeof State !== 'undefined') context.turn = State.turns;
+      if (typeof State !== 'undefined' && State.variables) context.location = State.variables.location || null;
+    } catch (e) { /* diagnostics must not block requests */ }
+    return context;
+  }
 
   function getConfig() {
+    if (BACKEND_CONFIG) return BACKEND_CONFIG;
     if (typeof State !== 'undefined' && State.variables && State.variables.llmConfig) {
       return State.variables.llmConfig;
     }
@@ -13,259 +39,219 @@
       provider: 'ollama',
       endpoint: 'http://localhost:11434',
       model: 'llama3.2',
-      apiKey: '',
       maxTokens: 512,
-      temperature: 0.8
+      temperature: 0.8,
+      apiKeyConfigured: false,
+      apiKeyMasked: ''
     };
   }
 
-  function buildOllamaPayload(prompt, config, stream) {
-    return {
-      model: config.model,
-      prompt: prompt,
-      stream: stream !== false,
-      options: {
-        temperature: config.temperature,
-        num_predict: config.maxTokens
-      }
-    };
+  function applyBackendConfig(config) {
+    if (!config || typeof config !== 'object') return getConfig();
+    BACKEND_CONFIG = config;
+    if (typeof State !== 'undefined' && State.variables) State.variables.llmConfig = config;
+    return config;
   }
 
-  function buildOllamaChatPayload(messages, config, stream) {
-    return {
-      model: config.model,
-      messages: messages,
-      stream: stream !== false,
-      options: {
-        temperature: config.temperature,
-        num_predict: config.maxTokens
-      }
-    };
+  function parseConfigResponse(response) {
+    return response.text().then(function (text) {
+      var data;
+      try { data = JSON.parse(text || '{}'); } catch (e) { throw new Error('后端配置响应不是合法 JSON'); }
+      if (!response.ok || !data.ok || !data.config) throw new Error(data.error || ('读取配置失败：HTTP ' + response.status));
+      return applyBackendConfig(data.config);
+    });
   }
 
-  function buildOpenAIPayload(messages, config, stream) {
-    return {
-      model: config.model,
-      messages: messages,
-      stream: stream !== false,
-      temperature: config.temperature,
-      max_tokens: config.maxTokens
-    };
-  }
-
-  function parseOllamaStreamChunk(chunk) {
-    try {
-      var data = JSON.parse(chunk);
-      if (data.done) return { done: true, text: '' };
-      return { done: false, text: data.response || '' };
-    } catch (e) {
-      return { done: false, text: '' };
-    }
-  }
-
-  function parseOllamaChatStreamChunk(chunk) {
-    try {
-      var data = JSON.parse(chunk);
-      if (data.done) return { done: true, text: '' };
-      if (data.message && data.message.content) {
-        return { done: false, text: data.message.content };
-      }
-      return { done: false, text: '' };
-    } catch (e) {
-      return { done: false, text: '' };
-    }
-  }
-
-  function parseOpenAIStreamChunk(chunk) {
-    try {
-      var line = chunk.replace(/^data:\s*/, '');
-      if (line === '[DONE]') return { done: true, text: '' };
-      var data = JSON.parse(line);
-      if (data.choices && data.choices[0]) {
-        var choice = data.choices[0];
-        if (choice.delta && choice.delta.content) {
-          return { done: false, text: choice.delta.content };
-        }
-        if (choice.finish_reason) {
-          return { done: true, text: '' };
-        }
-      }
-      return { done: false, text: '' };
-    } catch (e) {
-      return { done: false, text: '' };
-    }
-  }
-
-  function readStream(reader, parser, onChunk, onDone, onError) {
-    var decoder = new TextDecoder();
-    var buffer = '';
-
-    function pump() {
-      reader.read().then(function (result) {
-        if (result.done) {
-          onDone();
-          return;
-        }
-        buffer += decoder.decode(result.value, { stream: true });
-        var lines = buffer.split('\n');
-        buffer = lines.pop();
-        lines.forEach(function (line) {
-          line = line.trim();
-          if (!line || line === '[DONE]') return;
-          var parsed = parser(line);
-          if (!parsed.done || parsed.text) {
-            onChunk(parsed);
-          }
-          if (parsed.done) {
-            onDone();
-            return;
-          }
+  function loadBackendConfig(force) {
+    if (CONFIG_PROMISE && !force) return CONFIG_PROMISE;
+    CONFIG_PROMISE = fetch('/api/llm/config', { method: 'GET', cache: 'no-store' })
+      .then(parseConfigResponse)
+      .then(function (config) {
+        logEvent('info', 'llm-config-loaded', {
+          provider: config.provider,
+          endpoint: config.endpoint,
+          model: config.model,
+          apiKeyConfigured: config.apiKeyConfigured
         });
-        pump();
-      }).catch(function (err) {
-        onError(err);
+        return config;
+      })
+      .catch(function (err) {
+        CONFIG_PROMISE = null;
+        logEvent('error', 'llm-config-load-failed', { message: err.message || String(err) });
+        throw err;
       });
-    }
-    pump();
+    return CONFIG_PROMISE;
+  }
+
+  function saveBackendConfig(updates) {
+    return fetch('/api/llm/config', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates || {})
+    }).then(parseConfigResponse).then(function (config) {
+      CONFIG_PROMISE = Promise.resolve(config);
+      logEvent('info', 'llm-config-saved', {
+        provider: config.provider,
+        endpoint: config.endpoint,
+        model: config.model,
+        apiKeyConfigured: config.apiKeyConfigured
+      });
+      return config;
+    });
+  }
+
+  function abortError(signal) {
+    var error = new Error('LLM 请求已取消');
+    error.name = 'AbortError';
+    error.code = signal.reason && signal.reason.code === 'STALE_SCOPE' ? 'STALE_SCOPE' : 'CANCELLED';
+    return error;
+  }
+
+  // Race even configuration/body reads: cancellation must settle without waiting
+  // for a shared config fetch or a transport which ignores AbortSignal.
+  function waitForRequest(work, signal) {
+    return new Promise(function (resolve, reject) {
+      function aborted() { reject(abortError(signal)); }
+      if (signal.aborted) { aborted(); return; }
+      signal.addEventListener('abort', aborted, { once: true });
+      Promise.resolve().then(function () {
+        if (signal.aborted) throw abortError(signal);
+        return work();
+      }).then(resolve, reject).finally(function () {
+        signal.removeEventListener('abort', aborted);
+      });
+    });
   }
 
   function makeRequest(isChat) {
-    return function (input, options) {
+    return async function request(input, options) {
       options = options || {};
-      var config = getConfig();
-      if (options.maxTokens) {
-        var overridden = {};
-        for (var key in config) {
-          if (config.hasOwnProperty(key)) overridden[key] = config[key];
-        }
-        overridden.maxTokens = options.maxTokens;
-        config = overridden;
-      }
-      var stream = options.stream !== false;
-      var url;
-      var payload;
-      var headers = { 'Content-Type': 'application/json' };
-      var isArrayInput = Array.isArray(input);
-
-      if (config.provider === 'ollama') {
-        if (isChat || isArrayInput) {
-          url = config.endpoint.replace(/\/$/, '') + '/api/chat';
-          payload = buildOllamaChatPayload(isArrayInput ? input : [{ role: 'user', content: input }], config, stream);
-        } else {
-          url = config.endpoint.replace(/\/$/, '') + '/api/generate';
-          payload = buildOllamaPayload(input, config, stream);
-        }
-      } else {
-        url = config.endpoint.replace(/\/$/, '') + '/v1/chat/completions';
-        var messages = isArrayInput ? input : [{ role: 'user', content: input }];
-        payload = buildOpenAIPayload(messages, config, stream);
-        if (config.apiKey) {
-          headers['Authorization'] = 'Bearer ' + config.apiKey;
-        }
-      }
-
       var controller = new AbortController();
+      var signal = controller.signal;
+      var external = options.signal;
+      function cancel() { controller.abort(external.reason); }
+      if (external) {
+        if (external.aborted) cancel();
+        else external.addEventListener('abort', cancel, { once: true });
+      }
+      // Legacy abort() affects the most recently started pending request only.
       ACTIVE_REQUEST = controller;
-
-      return new Promise(function (resolve, reject) {
-        var fullText = '';
-        var onChunk = options.onChunk || function () {};
-
-        function selectParser() {
-          if (config.provider === 'ollama') {
-            return (isChat || isArrayInput) ? parseOllamaChatStreamChunk : parseOllamaStreamChunk;
-          }
-          return parseOpenAIStreamChunk;
-        }
-
-        fetch(url, {
-          method: 'POST',
-          headers: headers,
-          body: JSON.stringify(payload),
-          signal: controller.signal
-        }).then(function (response) {
-          if (!response.ok) {
-            if (response.status === 0) {
-              reject(new Error('CORS_BLOCKED：LLM 服务器阻止了请求。如果使用 Ollama，请用以下命令启动：OLLAMA_ORIGINS=* ollama serve'));
-            } else {
-              reject(new Error('HTTP ' + response.status + ': ' + response.statusText));
-            }
-            return;
-          }
-
-          if (!stream) {
-            return response.json().then(function (data) {
-              var text = '';
-              if (config.provider === 'ollama') {
-                if (isChat || isArrayInput) {
-                  text = (data.message && data.message.content) ? data.message.content : '';
-                } else {
-                  text = data.response || '';
-                }
-              } else {
-                text = (data.choices && data.choices[0] && data.choices[0].message) ? data.choices[0].message.content : '';
-              }
-              resolve(text);
-            });
-          }
-
-          var reader = response.body.getReader();
-          var parser = selectParser();
-
-          readStream(reader, parser, function (parsed) {
-            if (parsed.done) {
-              resolve(fullText);
-              return;
-            }
-            if (parsed.text) {
-              fullText += parsed.text;
-              onChunk(parsed.text, fullText);
-            }
-          }, function () {
-            resolve(fullText);
-          }, function (err) {
-            if (err.name === 'AbortError') {
-              resolve(fullText);
-            } else {
-              reject(err);
-            }
-          });
-        }).catch(function (err) {
-          if (err.name === 'AbortError') {
-            resolve(fullText);
-          } else if (err.message && err.message.indexOf('Failed to fetch') !== -1) {
-            reject(new Error('NETWORK_ERROR：无法连接到 LLM 服务器 ' + config.endpoint + '。它是否正在运行？'));
-          } else {
-            reject(err);
-          }
+      var requestId = createRequestId();
+      var started = Date.now();
+      var operation = options.operation || (isChat ? 'chat' : 'generate');
+      trace(requestId, { startedAt: started, operation: operation, status: 'preparing',
+        traceContext: options.traceContext || null, assembly: options.promptAssembly || null });
+      try {
+        if (signal.aborted) throw abortError(signal);
+        await waitForRequest(function () { return loadBackendConfig(false); }, signal);
+        if (signal.aborted) throw abortError(signal);
+        var config = getConfig();
+        var payload = isChat || Array.isArray(input)
+          ? { messages: Array.isArray(input) ? input : [{ role: 'user', content: input }] }
+          : { prompt: input };
+        payload.temperature = typeof options.temperature === 'number' ? options.temperature : config.temperature;
+        payload.maxTokens = Math.max(config.maxTokens || 0, options.maxTokens || 0);
+        payload.stream = options.stream !== false;
+        payload.operation = operation;
+        payload.context = requestContext();
+        if (options.tools && options.tools.length) payload.tools = options.tools;
+        trace(requestId, { status: 'pending', model: config.model, provider: config.provider, payload: payload });
+        logEvent('info', 'llm-request-start', {
+          requestId: requestId, operation: operation, model: config.model,
+          inputLength: JSON.stringify(payload.messages || payload.prompt || '').length,
+          inputType: payload.messages ? 'chat' : 'prompt', messageCount: payload.messages ? payload.messages.length : 0,
+          maxTokens: payload.maxTokens, temperature: payload.temperature,
+          toolsCount: payload.tools ? payload.tools.length : 0
         });
-      });
+        var response = await waitForRequest(function () {
+          return fetch('/api/llm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Request-ID': requestId },
+            body: JSON.stringify(payload), signal: signal
+          });
+        }, signal);
+        var bodyText = await waitForRequest(function () { return response.text(); }, signal);
+        if (signal.aborted) throw abortError(signal);
+        var data;
+        try { data = JSON.parse(bodyText); }
+        catch (err) { throw new Error('后端返回了无法解析的响应（HTTP ' + response.status + '）'); }
+        trace(requestId, { response: { text: data && data.text || '', tool_calls: data && data.tool_calls || [],
+          finishReason: data && data.finishReason, requestId: data && data.requestId || requestId } });
+        if (!response.ok) {
+          var responseError = new Error(data && data.error || ('HTTP ' + response.status));
+          responseError.requestId = data && data.requestId || requestId;
+          responseError.status = response.status;
+          throw responseError;
+        }
+        var text = data && typeof data.text === 'string' ? data.text : '';
+        var toolCalls = data && Array.isArray(data.tool_calls) && data.tool_calls.length ? data.tool_calls : null;
+        if (!text.trim() && !(options.returnRaw && toolCalls)) {
+          var emptyError = new Error('LLM 返回了空响应');
+          emptyError.code = 'EMPTY_RESPONSE';
+          throw emptyError;
+        }
+        if (signal.aborted) throw abortError(signal);
+        if (typeof options.onChunk === 'function') options.onChunk(text, text);
+        if (signal.aborted) throw abortError(signal);
+        trace(requestId, { status: 'success', ms: Date.now() - started });
+        logEvent('info', 'llm-request-success', {
+          requestId: data.requestId || requestId, operation: operation,
+          ms: Date.now() - started, responseLength: text.length,
+          toolCallCount: toolCalls ? toolCalls.length : 0
+        });
+        return options.returnRaw ? {
+          text: text, tool_calls: toolCalls, message: data.message,
+          finishReason: data.finishReason, requestId: data.requestId || requestId
+        } : text;
+      } catch (err) {
+        if (signal.aborted) err = abortError(signal);
+        var networkFailure = err.message && err.message.indexOf('Failed to fetch') !== -1;
+        if (networkFailure) {
+          err = new Error('NETWORK_ERROR：无法连接到后端。请先运行 node server/index.js，然后打开 http://localhost:3000');
+        }
+        err.requestId = err.requestId || requestId;
+        trace(requestId, { status: err.name === 'AbortError' ? 'cancelled' : 'failed', ms: Date.now() - started,
+          error: { message: err.message, code: err.code || null, status: err.status || null } });
+        logEvent(err.name === 'AbortError' ? 'warn' : 'error',
+          err.name === 'AbortError' ? 'llm-request-aborted' : 'llm-request-failed', {
+            requestId: err.requestId, operation: operation, ms: Date.now() - started,
+            message: err.message, code: err.code || null, status: err.status || null,
+            stage: networkFailure ? 'network' : err.status ? 'backend-http' : 'client-response', stack: err.stack || ''
+          });
+        throw err;
+      } finally {
+        if (external) external.removeEventListener('abort', cancel);
+        if (ACTIVE_REQUEST === controller) ACTIVE_REQUEST = null;
+      }
     };
   }
 
   window.LLMEngine = {
     isAvailable: function () {
       var config = getConfig();
-      return config.enabled && config.endpoint && config.model;
+      return config.enabled && config.model;
     },
 
     getConfig: getConfig,
 
     setConfig: function (updates) {
-      var config = getConfig();
-      for (var key in updates) {
-        if (updates.hasOwnProperty(key)) {
-          config[key] = updates[key];
-        }
-      }
-      if (typeof State !== 'undefined' && State.variables) {
-        State.variables.llmConfig = config;
-      }
+      return saveBackendConfig(updates);
     },
+
+    loadConfig: loadBackendConfig,
+
+    saveConfig: saveBackendConfig,
 
     generate: makeRequest(false),
 
     chat: makeRequest(true),
+
+    chatRaw: function (input, options) {
+      options = Object.assign({}, options || {});
+      options.returnRaw = true;
+      options.stream = false;
+      return makeRequest(true)(input, options);
+    },
 
     abort: function () {
       if (ACTIVE_REQUEST) {
@@ -277,7 +263,12 @@
 
   if (typeof whenSugarCubeReady !== 'undefined') {
     whenSugarCubeReady(function () {
-      console.log('[LLMEngine] Loaded. Provider:', getConfig().provider);
+      console.log('[LLMEngine] Loaded. (backend proxy mode)');
+      if (typeof jQuery !== 'undefined') {
+        $(document).on(':storyready', function () {
+          loadBackendConfig(true).catch(function () { /* the config page will show the connection error */ });
+        });
+      }
     });
   }
 }());

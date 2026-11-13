@@ -1,44 +1,73 @@
 :: QuestLog
 !任务日志
 
-<<set _ids to Object.keys($quests)>>
-<<if _ids.length gt 0>>
-  <<for _i to 0; _i lt _ids.length; _i++>>
-    <<set _q to $quests[_ids[_i]]>>
+<<run (typeof TaskEngine !== "undefined") && TaskEngine.ensure()>>
+<<set _activeIds to Object.keys($quests).filter(function (id) { return $quests[id].status !== "completed" && $quests[id].status !== "failed"; })>>
+<<set _historyIds to Object.keys($quests).filter(function (id) { return $quests[id].status === "completed" || $quests[id].status === "failed"; })>>
+<h2>当前任务</h2>
+<<if _activeIds.length>>
+  <<for _id range _activeIds>>
+    <<set _q to $quests[_id]>><<include "QuestLogCard">>
+  <</for>>
+<<else>>
+  <p>目前没有进行中或等待交付的任务。</p>
+<</if>>
+<<if _historyIds.length>>
+  <details class="quest-history">
+    <summary>历史任务（<<print _historyIds.length>>）</summary>
+    <<for _id range _historyIds>>
+      <<set _q to $quests[_id]>><<include "QuestLogCard">>
+    <</for>>
+  </details>
+<</if>>
+
+<div class="page-actions"><<link "返回">>
+  <<set _return to $questLogReturn>>
+  <<set $questLogReturn to null>>
+  <<if _return and _return.passage and Story.has(_return.passage)>>
+    <<if _return.dynamicSceneId and $generatedScenes[_return.dynamicSceneId]>>
+      <<set $dynamicSceneId to _return.dynamicSceneId>>
+    <</if>>
+    <<if _return.activeNPCId and $npcs[_return.activeNPCId]>>
+      <<set $activeNPCId to _return.activeNPCId>>
+    <</if>>
+    <<goto _return.passage>>
+  <<else>>
+    <<goto $location>>
+  <</if>>
+<</link>></div>
+
+
+:: QuestLogCard
     <div class="llm-quest-card">
-      <h3>任务：<<print _q.title>></h3>
-      <p><<print _q.description>></p>
+      <h3>任务：<<llmtext `_q.title`>></h3>
+      <p><<llmtext `_q.description`>></p>
       <<if _q.objectives && _q.objectives.length gt 0>>
       <ul>
         <<for _obj range _q.objectives>>
-        <li><<if _obj.completed>>[✓]<<else>>[ ]<</if>> <<print _obj.text>></li>
+        <li><<if _obj.completed>>[✓]<<else>>[ ]<</if>> <<llmtext `_obj.text`>><<if (_obj.required || 1) gt 1>>（<<llmtext `_obj.current || 0`>>/<<llmtext `_obj.required`>>）<</if>><<if _obj.locations && _obj.locations.length>> — <<llmtext `_obj.locations.join(" / ")`>><<if _obj.areas && _obj.areas.length>> / <<llmtext `_obj.areas.join(" / ")`>><</if>><</if>><<if !_obj.completed and TaskEngine.isTurnInObjective(_q, _obj)>><span>（在对话中交付时完成）</span><<elseif _q.status is "active" and !_obj.completed and typeof QuestEvents !== "undefined" and TaskEngine.requiresEvent(_q)>><<questobjectiveentry _q.id _obj.id>><</if>></li>
         <</for>>
       </ul>
       <</if>>
-      <p>状态：<<print _q.status || "active">></p>
-      <p>奖励：<<print (_q.rewards && _q.rewards.length) ? _q.rewards.join("、") : "无">></p>
-      <<if _q.status is "active">>
-        <<set _allDone to true>>
-        <<for _obj range _q.objectives>>
-          <<if not _obj.completed>><<set _allDone to false>><</if>>
-        <</for>>
-        <<if _allDone>>
-          <div class="quest-completable">任务可提交！</div>
-          <<link "提交任务">>
-            <<set _msgs to checkQuestCompletion()>>
-            <<if _msgs.length gt 0>>
-              <<run (typeof NarrativeUI !== 'undefined') && NarrativeUI.showToast(_msgs.join("\n"))>>
-            <<else>>
-              <<run (typeof NarrativeUI !== 'undefined') && NarrativeUI.showToast("任务尚未完成。")>>
-            <</if>>
-            <<goto "QuestLog">>
-          <</link>>
+      <<if _q.result and _q.result.events>>
+        <details class="quest-history"><summary>已发生的任务事件</summary>
+        <<for _event range _q.result.events>><p><<llmtext _event.summary>></p><</for>>
+        </details>
+      <</if>>
+      <p>状态：<<switch _q.status>><<case "completed">>已完成<<case "failed">>已失败<<case "ready_to_turn_in">>等待交付<<default>>进行中<</switch>></p>
+      <<if _q.rewardMode is "npc_discretionary">>
+        <p>回报：无事先约定；是否回应以及如何回应由对方自行决定。</p>
+      <<else>>
+        <p>约定报酬：<<llmtext `(_q.rewards && _q.rewards.length) ? _q.rewards.join("、") : "无"`>><<if _q.rewardsClaimed>>（已结算）<</if>></p>
+        <<if _q.rewardMode is "fixed_plus_npc">><p>约定报酬以外的回应由对方自行决定。</p><</if>>
+      <</if>>
+      <<if _q.status is "ready_to_turn_in">>
+        <div class="quest-completable">前置目标已完成，可以前往交付。</div>
+        <<if _q.turnIn.type is "npc">>
+          <p>交付给：<<llmtext `($npcs[_q.turnIn.npcId] && $npcs[_q.turnIn.npcId].name) || _q.turnIn.npcId`>>（<<llmtext `_q.turnIn.locationId`>><<if _q.turnIn.areaId>> / <<llmtext `_q.turnIn.areaId`>><</if>>）</p>
+        <<elseif _q.turnIn.type is "location">>
+          <p>交付地点：<<llmtext `_q.turnIn.locationId`>><<if _q.turnIn.areaId>> / <<llmtext `_q.turnIn.areaId`>><</if>></p>
         <</if>>
+        <<set _qid to _q.id>><<capture _qid>><<link "前往交付">><<run TaskEngine.navigateToTurnIn(_qid)>><</link>><</capture>>
       <</if>>
     </div>
-  <</for>>
-<<else>>
-  你目前没有任何任务。和城里的人交谈，也许能找到些事做。
-<</if>>
-
-<<action "返回" $location "回到原处">>

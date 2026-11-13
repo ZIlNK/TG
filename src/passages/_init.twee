@@ -33,6 +33,9 @@
   dayName: "Monday"
 }>>
 <<set $location = "Bedroom">>
+<<set $position = { locationId: "Bedroom", areaId: "bedroom_main" }>>
+<<set $regions = {}>>
+<<set $activeQuestEvent = null>>
 <<set $game = {
   version: "0.1.0",
   started: true,
@@ -55,10 +58,7 @@
 <<set $debug = false>>
 <<set $llmConfig = {
   enabled: true,
-  provider: "ollama",
-  endpoint: "http://localhost:11434",
   model: "llama3.2",
-  apiKey: "",
   maxTokens: 512,
   temperature: 0.8
 }>>
@@ -71,8 +71,13 @@
 <<set $generatedScenes = {} >>
 <<set $dynamicSceneId = "" >>
 <<set $npcs = {} >>
+<<set $proactiveDialogueUsage = {} >>
 <<set $quests = {} >>
 <<set $worldMemory = { events: [] } >>
 <<set $activeNPCId = "" >>
 <<set $activeQuestId = "" >>
 <<set $llmGatewayTarget = "" >>
+<<set $dialogueReturn = null >>
+<<set $questLogReturn = null >>
+
+<<run NPCAgency.ensure()>>

@@ -5,4 +5,4 @@
 
 <<llmconfig>>
 
-<<action "返回" "Settings">>
+<<action "返回" "back" "回到原处">>

@@ -139,12 +139,18 @@
     return !!inv[itemName];
   };
 
+  window.inventoryItemLabel = function (key) {
+    var db = State.variables.npcAgency;
+    var item = db && Object.prototype.hasOwnProperty.call(db.itemDefinitions, key) && db.itemDefinitions[key];
+    return item ? item.title : key;
+  };
+
   window.formatInventory = function () {
     var inv = State.variables.player.inventory;
-    if (Array.isArray(inv)) return inv.join('、') || '空';
+    if (Array.isArray(inv)) return inv.map(inventoryItemLabel).join('、') || '空';
     var parts = [];
     for (var k in inv) {
-      if (inv.hasOwnProperty(k)) parts.push(k + ' x' + inv[k]);
+      if (inv.hasOwnProperty(k)) parts.push(inventoryItemLabel(k) + ' x' + inv[k]);
     }
     return parts.join('、') || '空';
   };
@@ -308,17 +314,8 @@
 
   window.getRelationshipProgress = function (npc) {
     if (!npc || !npc.relationship) return 0;
-    var val = npc.relationship.value || 0;
-    var currentMin = 0, nextMax = 20;
-    for (var i = 0; i < RELATIONSHIP_TIERS.length; i++) {
-      if (val >= RELATIONSHIP_TIERS[i].min && val <= RELATIONSHIP_TIERS[i].max) {
-        currentMin = RELATIONSHIP_TIERS[i].min;
-        nextMax = (i < RELATIONSHIP_TIERS.length - 1) ? RELATIONSHIP_TIERS[i + 1].min : RELATIONSHIP_TIERS[i].max;
-        break;
-      }
-    }
-    var range = nextMax - currentMin;
-    return range > 0 ? (val - currentMin) / range : 1;
+    // Overall progress across the full 0-100 range, matching the "x/100" label.
+    return Math.max(0, Math.min(100, npc.relationship.value || 0)) / 100;
   };
 
   // Relationship decay: called on day rollover
@@ -330,13 +327,78 @@
       if (!npcs.hasOwnProperty(id)) continue;
       var npc = npcs[id];
       if (!npc.relationship) continue;
+      if (npc.solidified) continue; // solidified NPCs are stable, don't decay
       var daysSinceMet = currentDay - (npc.relationship.lastMetDay || currentDay);
       if (daysSinceMet > 3) {
         var decay = Math.floor(daysSinceMet / 3);
-        npc.relationship.value = Math.max(0, (npc.relationship.value || 0) - decay);
-        updateRelationshipTier(npc);
+        bumpRelationship(id, -decay, 'daily-decay:' + currentDay + ':' + id);
+        // Ephemeral NPCs fade away once fully forgotten.
+        if (npc.relationship.value <= 0 && !npc.actorId) {
+          delete npcs[id];
+          if (State.variables.activeNPCId === id) State.variables.activeNPCId = '';
+        }
       }
     }
+  };
+
+  // Solidify: promote an LLM-generated NPC into a stable character card once
+  // the player has built enough of a relationship with them.
+  var SOLIDIFY_RELATION = 40; // 「朋友」tier
+
+  window.solidifyNPC = function (npcId) {
+    var npc = State.variables.npcs && State.variables.npcs[npcId];
+    if (!npc || npc.solidified) return null;
+    if (!State.variables.characterCards) State.variables.characterCards = {};
+
+    var traits = npc.traits || [];
+    var firstDialogue = (npc.dialogue && npc.dialogue.length && npc.dialogue[0].content) || '';
+    var card = {
+      actorId: npc.actorId || 'npc:' + npcId,
+      profileRef: npc.profileRef || npcId,
+      name: npc.name,
+      role: npc.role || '',
+      location: npc.location || State.variables.location || '',
+      locationId: npc.locationId || npc.location || State.variables.location || '',
+      areaId: npc.areaId || (State.variables.position && State.variables.position.areaId) || '',
+      proactiveDialogue: npc.proactiveDialogue ? JSON.parse(JSON.stringify(npc.proactiveDialogue)) : { limitPerArea: 1, usedByArea: {} },
+      description: '一名' + (npc.role || '市民') + '。',
+      personality: traits.join('、'),
+      scenario: npc.memory || '',
+      greeting: firstDialogue,
+      keywords: [npc.name, npc.role]
+    };
+    State.variables.characterCards[npcId] = card;
+    npc.solidified = true;
+    return card;
+  };
+
+  window.maybeSolidifyNPC = function (npcId) {
+    var npc = State.variables.npcs && State.variables.npcs[npcId];
+    if (!npc || npc.solidified || !npc.relationship) return false;
+    if (npc.relationship.value >= SOLIDIFY_RELATION) {
+      solidifyNPC(npcId);
+      if (typeof NarrativeUI !== 'undefined' && NarrativeUI.showToast) {
+        NarrativeUI.showToast(npc.name + ' 已成为你的熟人，被固化为稳定角色。');
+      }
+      return true;
+    }
+    return false;
+  };
+
+  window.bumpRelationship = function (npcId, delta, sourceEventId) {
+    var npc = State.variables.npcs && State.variables.npcs[npcId];
+    if (!npc || typeof delta !== 'number' || !isFinite(delta)) return;
+    if (typeof initRelationship === 'function') initRelationship(npc);
+    if (sourceEventId && npc.relationship.history.some(function (entry) { return entry.sourceEventId === sourceEventId; })) return;
+    npc.relationship.value = Math.max(0, Math.min(100, (npc.relationship.value || 0) + delta));
+    npc.relationship.history.push({ sourceEventId: sourceEventId || null, delta: delta, day: (State.variables.time || {}).day });
+    npc.disposition = Math.max(-10, Math.min(10, (npc.disposition || 0) + Math.sign(delta)));
+    if (typeof updateRelationshipTier === 'function') updateRelationshipTier(npc);
+    console.log('[relationship] ' + npc.name + ' 关系 ' + (delta > 0 ? '+' : '') + delta + ' -> ' + npc.relationship.value + '（' + (npc.relationship.tier || '') + '）');
+    if (typeof NarrativeUI !== 'undefined' && NarrativeUI.showToast) {
+      NarrativeUI.showToast('与「' + npc.name + '」的关系 ' + (delta > 0 ? '+' : '') + delta + '（' + npc.relationship.value + '/100）');
+    }
+    if (typeof maybeSolidifyNPC === 'function') maybeSolidifyNPC(npcId);
   };
 
   // Apply a structured effects object to player state. Returns human-readable change messages.
@@ -400,8 +462,20 @@
     if (effects.questObjective !== undefined && State.variables.activeQuestId) {
       var q = State.variables.quests[State.variables.activeQuestId];
       if (q && q.objectives && q.objectives[effects.questObjective]) {
-        q.objectives[effects.questObjective].completed = true;
-        msgs.push('任务目标完成：' + q.objectives[effects.questObjective].text);
+        var objective = q.objectives[effects.questObjective];
+        if (typeof TaskEngine !== 'undefined') {
+          TaskEngine.ensure();
+          var result = TaskEngine.progress({
+            questId: q.id,
+            objectiveId: objective.id,
+            actionId: objective.actionId,
+            amount: objective.required || 1
+          }, { silent: true });
+          if (result.ok) msgs = msgs.concat(result.messages);
+        } else {
+          objective.completed = true;
+          msgs.push('任务目标完成：' + objective.text);
+        }
       }
     }
 
@@ -432,12 +506,7 @@
         var rcNpc = State.variables.npcs[npcId];
         var delta = typeof rc.delta === 'number' ? rc.delta : 0;
         if (delta !== 0) {
-          rcNpc.disposition = Math.max(-10, Math.min(10, (rcNpc.disposition || 0) + (delta > 0 ? 1 : -1)));
-          if (!rcNpc.relationship) {
-            rcNpc.relationship = { tier: '陌生人', value: 0, history: [], lastMetDay: 1, meetCount: 1 };
-          }
-          rcNpc.relationship.value = Math.max(0, Math.min(100, (rcNpc.relationship.value || 0) + delta));
-          if (typeof updateRelationshipTier === 'function') updateRelationshipTier(rcNpc);
+          bumpRelationship(npcId, delta, rc.sourceEventId);
           msgs.push(rcNpc.name + ' 的关系值 ' + (delta > 0 ? '+' : '') + delta);
         }
       }
@@ -452,6 +521,7 @@
   // Parse quest reward strings like "金钱 50" / "声望 5" / "物品 能量饮料" / "健康 10".
   window.applyQuestRewards = function (quest) {
     if (!quest || !quest.rewards) return [];
+    if (quest.rewardsClaimed) return [];
     var msgs = [];
     quest.rewards.forEach(function (reward) {
       var parts = String(reward).split(/\s+/);
@@ -481,12 +551,15 @@
         msgs.push('获得 ' + name + (val > 1 ? ' x' + val : ''));
       }
     });
+    quest.rewardsClaimed = true;
+    quest.completedAt = quest.completedAt || Date.now();
     quest.status = 'completed';
     return msgs;
   };
 
   // Check all active quests; if objectives are complete, mark done and apply rewards.
   window.checkQuestCompletion = function () {
+    if (typeof TaskEngine !== 'undefined') return TaskEngine.recomputeAll();
     var quests = State.variables.quests;
     var msgs = [];
     if (!quests) return msgs;
@@ -501,6 +574,23 @@
       }
     }
     return msgs;
+  };
+
+  // Fail active quests whose deadline has passed.
+  window.checkQuestDeadlines = function () {
+    var quests = State.variables.quests;
+    if (!quests) return;
+    var day = State.variables.time ? State.variables.time.day : 1;
+    for (var id in quests) {
+      if (!quests.hasOwnProperty(id)) continue;
+      var q = quests[id];
+      if (q && (q.status === 'active' || q.status === 'ready_to_turn_in') && typeof q.deadlineDay === 'number' && day > q.deadlineDay) {
+        q.status = 'failed';
+        if (typeof NarrativeUI !== 'undefined' && NarrativeUI.showToast) {
+          NarrativeUI.showToast('任务「' + q.title + '」已过期。');
+        }
+      }
+    }
   };
 
   // Difficulty modifier: returns multipliers used by mechanics.
@@ -521,10 +611,18 @@
     if (!quests || !quests.tutorial || quests.tutorial.status !== 'active') return;
     var q = quests.tutorial;
     if (!q.objectives || !q.objectives[index] || q.objectives[index].completed) return;
-    q.objectives[index].completed = true;
+    var msgs = [];
+    if (typeof TaskEngine !== 'undefined') {
+      TaskEngine.ensure();
+      var objective = q.objectives[index];
+      var result = TaskEngine.progress({ questId: q.id, objectiveId: objective.id, actionId: objective.actionId, amount: objective.required || 1 }, { silent: true });
+      if (result.ok) msgs = result.messages;
+    } else {
+      q.objectives[index].completed = true;
+      msgs = checkQuestCompletion();
+    }
     var allDone = q.objectives.every(function (o) { return o.completed; });
     if (allDone) {
-      var msgs = checkQuestCompletion();
       State.variables.game.tutorialComplete = true;
       if (typeof NarrativeUI !== 'undefined' && NarrativeUI.showToast && msgs.length > 0) {
         NarrativeUI.showToast(msgs.join('\n'));
@@ -578,6 +676,7 @@
         State.variables.world.weather = weathers[Math.floor(Math.random() * weathers.length)];
         State.variables.world.temperature = Math.floor(Math.random() * 21) + 15;
         if (typeof decayRelationships === 'function') decayRelationships();
+        if (typeof checkQuestDeadlines === 'function') checkQuestDeadlines();
       }
 
       // Hunger increases by 5 per 2 hours of elapsed time, scaled by difficulty.
@@ -611,6 +710,17 @@
         el.textContent = label;
         el.addEventListener('click', function (ev) {
           ev.preventDefault();
+          if (target === 'back') {
+            var backOk = false;
+            if (typeof Engine !== 'undefined' && typeof Engine.back === 'function') {
+              backOk = Engine.back();
+            }
+            if (!backOk) {
+              var loc = (typeof State !== 'undefined' && State.variables && State.variables.location) || 'Bedroom';
+              Engine.play(loc);
+            }
+            return;
+          }
           Engine.play(target);
         });
         this.output.appendChild(el);

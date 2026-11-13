@@ -3,7 +3,7 @@
 
 <h2>技能</h2>
 <div class="character-section">
-<<for _sk in [&quot;运动&quot;, &quot;学识&quot;, &quot;社交&quot;, &quot;潜行&quot;, &quot;感知&quot;, &quot;意志&quot;, &quot;魅力&quot;]>>
+<<for _sk range ["运动", "学识", "社交", "潜行", "感知", "意志", "魅力"]>>
   <<set _sv to $player.skills[_sk]>>
   <<set _pct to Math.round((_sv.value / 100) * 100)>>
   <<set _xpPct to Math.round(getSkillProgress(_sk) * 100)>>
@@ -25,7 +25,7 @@
 <h2>社交关系</h2>
 <div class="character-section">
 <<set _hasRelations to false>>
-<<for _nid in Object.keys($npcs)>>
+<<for _nid range Object.keys($npcs)>>
   <<set _n to $npcs[_nid]>>
   <<if _n.relationship && _n.relationship.value gt 0>>
     <<set _hasRelations to true>>
@@ -53,11 +53,14 @@
 <h2>游戏统计</h2>
 <div class="character-section">
   <div class="stat-row">存活天数：<<print $time.day>></div>
-  <div class="stat-row">金钱：<<print &quot;$&quot; + $player.money>></div>
+  <div class="stat-row">金钱：<<print "$" + $player.money>></div>
   <div class="stat-row">声望：<<print $player.reputation>></div>
   <div class="stat-row">背包物品：<<print Object.keys($player.inventory).length>> 种</div>
   <div class="stat-row">已结识 NPC：<<print Object.keys($npcs).length>> 人</div>
   <div class="stat-row">游戏难度：<<print $game.difficulty>></div>
 </div>
 
-<<action &quot;返回&quot; $location &quot;回到原处&quot;>>
+<h2>随身物品</h2>
+<<npcinventory>>
+
+<<action "返回" "back" "回到原处">>

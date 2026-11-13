@@ -2,9 +2,10 @@
 (function () {
   'use strict';
 
-  // Token budget for structured (JSON) generation. Structured output needs more
-  // room than freeform narration, otherwise it gets truncated mid-JSON.
-  var STRUCTURED_MAX_TOKENS = 1024;
+  // Minimum token budget for structured (JSON) generation. Acts as a floor so a
+  // low config value still leaves room for reasoning + JSON; a higher user
+  // setting always wins (see llm-client.js maxTokens handling).
+  var STRUCTURED_MIN_TOKENS = 4096;
 
   function sanitizeJSON(text) {
     if (!text || typeof text !== 'string') return '';
@@ -331,24 +332,31 @@
     validate: validate,
     parseJSON: parseJSON,
 
-    generateJSON: function (prompt, schema, fallbackFn) {
+    generateJSON: function (prompt, schema, fallbackFn, operation) {
       return new Promise(function (resolve, reject) {
         if (typeof LLMEngine === 'undefined') {
           resolve(typeof fallbackFn === 'function' ? fallbackFn('LLMEngine not available') : null);
           return;
         }
 
-        LLMEngine.generate(prompt, { stream: false, maxTokens: STRUCTURED_MAX_TOKENS }).then(function (text) {
+        LLMEngine.generate(prompt, {
+          stream: false,
+          maxTokens: STRUCTURED_MIN_TOKENS,
+          operation: operation || 'structured-json'
+        }).then(function (text) {
           var parsed = parseJSON(text);
           if (!parsed.ok) {
-            console.warn('[LLMStructured] Parse failed:', parsed.error, '\nRaw:', text);
+            console.warn('[LLMStructured] Parse failed:', parsed.error,
+              'responseLength=' + (text ? text.length : 0),
+              'preview=' + (text || '').replace(/\s+/g, ' ').slice(0, 300));
             resolve(typeof fallbackFn === 'function' ? fallbackFn(parsed.error, text) : null);
             return;
           }
 
           var validation = validate(parsed.data, schema);
           if (!validation.valid) {
-            console.warn('[LLMStructured] Validation failed:', validation.error, '\nData:', parsed.data);
+            console.warn('[LLMStructured] Validation failed:', validation.error,
+              'keys=' + (parsed.data && typeof parsed.data === 'object' ? Object.keys(parsed.data).join(',') : 'none'));
             resolve(typeof fallbackFn === 'function' ? fallbackFn(validation.error, text, parsed.data) : null);
             return;
           }
@@ -403,14 +411,17 @@
     },
 
     fallbackQuest: function () {
+      var position = (typeof State !== 'undefined' && State.variables && State.variables.position) || { locationId: 'Street', areaId: 'street_main' };
       return {
         id: 'fallback-quest-' + Date.now(),
         title: '平静的一天',
         description: '此刻没有什么特别需要你关注的事情。',
         giver: '',
-        objectives: [{ text: '等待事情发生', completed: false }],
+        objectives: [{ id: 'wait', text: '等待事情发生', type: 'action', actionId: 'fallback:wait', locations: [position.locationId], areas: [position.areaId], required: 1, current: 0, completed: false, promptHint: '等待并观察周围' }],
         rewards: [],
-        status: 'active'
+        status: 'active',
+        turnIn: { type: 'automatic' },
+        rewardsClaimed: false
       };
     }
   };

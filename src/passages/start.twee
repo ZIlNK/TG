@@ -33,12 +33,15 @@
       description: "你刚搬到这座城市。先熟悉一下基本生存节奏吧。",
       giver: "",
       objectives: [
-        {text: "在卧室睡一次觉", completed: false},
-        {text: "去街上看看", completed: false},
-        {text: "在商店买一次食物", completed: false}
+        {id: "sleep-once", text: "在卧室睡一次觉", type: "action", actionId: "tutorial:sleep", locations: ["Bedroom"], areas: ["bedroom_main"], required: 1, current: 0, completed: false},
+        {id: "visit-street", text: "去街上看看", type: "visit", actionId: "tutorial:visit-street", locations: ["Street"], required: 1, current: 0, completed: false},
+        {id: "buy-food", text: "在商店买一次食物", type: "purchase", actionId: "tutorial:buy-food", locations: ["Shop"], required: 1, current: 0, completed: false}
       ],
       rewards: ["金钱 10", "声望 2"],
-      status: "active"
+      keywords: ["Bedroom", "Street", "Shop", "睡觉", "食物", "卧室", "商店"],
+      status: "active",
+      turnIn: {type: "automatic"},
+      rewardsClaimed: false
     }>>
     <<set $activeQuestId to "tutorial">>
   <</if>>

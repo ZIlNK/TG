@@ -2,44 +2,57 @@
 <<set _scene to $generatedScenes[$dynamicSceneId]>>
 
 <<if _scene>>
-  !<<print _scene.title>>
+  <div class="scene-shell scene-shell-dynamic">
+  <header class="scene-header">
+    <h1 class="scene-title"><<llmtext _scene.title>></h1>
+    <div class="scene-location"><<llmtext `(typeof RegionSystem !== "undefined" ? RegionSystem.formatPosition() : _scene.location)`>></div>
+  </header>
 
-  <<sceneimg _scene.location>>
+  <div class="scene-media"><<sceneimg _scene.location>></div>
 
-  <div class="scene-text"><<print _scene.text>></div>
+  <div class="scene-narrative"><<llmtext _scene.text>></div>
 
-  <<set _opts to _scene.options>>
-  <<for _opt range _opts>>
-    <<capture _opt>>
-      <<set _hasEffects to _opt.effects and Object.keys(_opt.effects).length gt 0>>
-      <<set _effectMsgs to "">>
-      <<if _hasEffects>>
-        <<set _effectMsgs to applyEffects(_opt.effects).join("，")>>
-      <</if>>
-      <<if _opt.target.indexOf("llm:") eq 0>>
-        <<link _opt.label>>
-          <<if _effectMsgs neq "">>
-            <<run NarrativeUI.showToast(_effectMsgs)>>
-          <</if>>
-          <<set $llmGatewayTarget to _opt.target>>
-          <<goto "LLMGateway">>
-        <</link>>
-      <<else>>
-        <<link _opt.label _opt.target>>
-          <<if _effectMsgs neq "">>
-            <<run NarrativeUI.showToast(_effectMsgs)>>
-          <</if>>
-        <</link>>
-      <</if>>
-    <</capture>>
-  <</for>>
+  <div class="dynamic-options"><<sceneoptions>></div>
+  <div class="page-actions"><<action "返回" "back" "回到原处">></div>
+  </div>
 <<else>>
   !场景不可用
 
   找不到请求的动态场景。它可能是在另一个存档中生成的，或者场景 ID 缺失。
+
+  <div class="page-actions"><<action "返回" "back" "回到原处">></div>
 <</if>>
 
-<<action "返回街道" "Street">>
+:: AreaScene
+<<set _region to (typeof RegionSystem !== "undefined" ? RegionSystem.currentRegion() : null)>>
+<<set _area to (typeof RegionSystem !== "undefined" ? RegionSystem.currentArea() : null)>>
+
+<<if _region and _area and _area.id neq _region.defaultAreaId>>
+  <div class="scene-shell scene-shell-area">
+    <header class="scene-header">
+      <h1 class="scene-title"><<llmtext _area.name>></h1>
+      <div class="scene-location"><<llmtext `RegionSystem.formatPosition()`>></div>
+    </header>
+
+    <div class="scene-media"><<sceneimg `RegionSystem.formatPosition()`>></div>
+
+    <<hubscene _region.id "neutral" _area.description>>
+
+    <div class="scene-fixed-actions">
+      <<link `"返回" + _region.name`>>
+        <<run MoveTool.invoke({ locationId: _region.id, areaId: _region.defaultAreaId }, { source: "area-return" })>>
+      <</link>>
+    </div>
+  </div>
+<<elseif _region>>
+  <<goto _region.passage>>
+<<else>>
+  !区域不可用
+
+  当前子区域没有完成注册。
+
+  <div class="page-actions"><<action "返回" "back" "回到原处">></div>
+<</if>>
 
 :: LLMGateway
 <<silently>>
@@ -55,9 +68,26 @@
     mood: "neutral",
     description: _seed
   }>>
-  <<llmscene2 _sceneDef.location _sceneDef.mood _sceneDef.description>>
+  <div class="scene-shell scene-shell-loading">
+    <header class="scene-header">
+      <h1 class="scene-title">正在生成场景</h1>
+      <div class="scene-location"><<llmtext `(typeof RegionSystem !== "undefined" ? RegionSystem.formatPosition() : $location)`>></div>
+    </header>
+    <<llmscene2 _sceneDef.location _sceneDef.mood _sceneDef.description>>
+  </div>
 <<else>>
-  未知的 LLM 网关目标：<<print _target>>
+  未知的 LLM 网关目标：<<llmtext _target>>
 
   <<action "返回" "DynamicScene">>
 <</if>>
+
+
+:: QuestEvent
+<div class="scene-shell">
+<<questevent>>
+</div>
+
+:: SceneAction
+<div class="scene-shell">
+<<sceneaction>>
+</div>

@@ -47,6 +47,115 @@
   margin: 12px 0;
 }
 
+.scene-shell {
+  display: flow-root;
+}
+
+.scene-shell > br,
+.scene-fixed-actions > br {
+  display: none;
+}
+
+.scene-header {
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color, #282828);
+}
+
+.passage .scene-title {
+  min-height: 1.2em;
+  margin: 0 0 5px;
+  padding: 0;
+  border: 0;
+  font-family: var(--font-sans, 'PingFang SC', 'Microsoft YaHei', sans-serif);
+  font-size: clamp(1.65rem, 4vw, 2.15rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.scene-title.is-typing::after {
+  content: '●';
+  display: inline-block;
+  margin-left: 0.22em;
+  font-family: sans-serif;
+  font-size: 0.38em;
+  line-height: 1;
+  vertical-align: 0.22em;
+  animation: scene-title-cursor 0.7s ease-in-out infinite alternate;
+}
+
+.scene-location {
+  color: var(--text-muted, #858585);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 11px;
+}
+
+.scene-media {
+  width: 100%;
+  height: clamp(220px, 38vw, 400px);
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color, #282828);
+  border-radius: var(--radius, 8px);
+  background: var(--bg-input, #262626);
+}
+
+.scene-media .scene-image {
+  width: 100% !important;
+  max-width: none;
+  height: 100% !important;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  object-fit: cover;
+}
+
+.scene-narrative {
+  margin: 18px 0;
+  padding-left: 16px;
+  color: var(--text-secondary, #b5b5b5);
+  border-left: 2px solid color-mix(in srgb, #fbbf24 50%, var(--border-color, #282828));
+  font-size: 14px;
+  line-height: 1.85;
+  white-space: pre-wrap;
+}
+
+.llm-narrative-message {
+  min-height: 1.85em;
+}
+
+.scene-generation-state {
+  color: var(--text-muted, #858585);
+}
+
+.scene-shell .llm-options-container,
+.scene-shell .dynamic-options {
+  margin: 18px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-color, #282828);
+}
+
+.scene-fixed-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.scene-fixed-actions .action-link,
+.scene-shell .page-actions .action-link {
+  margin: 0;
+}
+
+.scene-shell .page-actions {
+  margin-top: 8px;
+}
+
+.dynamic-options {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0;
+}
+
 .llm-typing {
   display: flex;
   align-items: center;
@@ -60,6 +169,23 @@
 .llm-typing-dots {
   display: flex;
   gap: 3px;
+}
+
+@keyframes scene-title-cursor {
+  from { opacity: 1; }
+  to { opacity: 0.18; }
+}
+
+@media (max-width: 600px) {
+  .scene-media {
+    height: clamp(190px, 56vw, 280px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-title.is-typing::after {
+    animation: none;
+  }
 }
 
 .llm-typing-dots span {
@@ -133,6 +259,21 @@
   padding: 7px 14px;
   white-space: nowrap;
   font-size: 13px;
+}
+
+.npc-dialogue-chat {
+  scroll-padding-top: 54px;
+}
+
+.npc-dialogue-chat .llm-input-row {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  margin: 0 0 10px;
+  padding: 0 0 10px;
+  background: var(--bg-passage, #171717);
+  border-bottom: 1px solid var(--border-color, #282828);
+  box-shadow: 0 8px 12px -12px rgba(0, 0, 0, 0.9);
 }
 
 .llm-retry-btn {
@@ -218,3 +359,89 @@
 .llm-quest-card li {
   margin: 4px 0;
 }
+
+/* Shared agency conversation: prose, durable offers and deterministic player controls. */
+.npc-agency-chat {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 16px 0;
+}
+
+.npc-agency-chat > p,
+.npc-agency-chat .llm-quest-card {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+}
+
+.npc-agency-chat > p {
+  padding: 10px 12px;
+  background: var(--bg-input, #262626);
+  border-radius: var(--radius, 8px);
+}
+
+.npc-agency-chat .llm-quest-card > strong {
+  color: var(--text-primary, #fafafa);
+}
+
+.npc-agency-chat form {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #282828);
+}
+
+.npc-agency-chat input[type="text"] {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  height: calc(1.5em + 22px);
+  box-sizing: border-box;
+  padding: 10px 12px;
+  color: var(--text-primary, #fafafa);
+  background: var(--bg-input, #262626);
+  border: 1px solid var(--border-color, #282828);
+  border-radius: var(--radius, 8px);
+  font: inherit;
+  line-height: 1.5;
+}
+
+.npc-agency-chat form > button {
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.npc-agency-chat .action-link {
+  margin: 4px 8px 4px 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.npc-agency-chat button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.npc-agency-chat input[type="text"]:focus-visible,
+.npc-agency-chat button:focus-visible {
+  outline: 2px solid var(--text-primary, #fafafa);
+  outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+  .npc-agency-chat form { flex-direction: column; align-items: stretch; }
+  .npc-agency-chat form .action-link { margin-right: 0; }
+}
+
+/* Task encounters reuse the existing scene/card/action visual language. */
+.quest-event-description { white-space: pre-wrap; line-height: 1.9; margin: 1.2em 0; }
+.quest-event-form { display: flex; align-items: center; gap: .6em; margin: 1em 0; }
+.quest-event-form input { flex: 1; min-width: 0; width: auto; margin: 0; }
+.quest-event-form button { flex-shrink: 0; margin: 0; }
+.quest-event .llm-options-container { display: flex; flex-wrap: wrap; gap: .5em; }

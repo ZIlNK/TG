@@ -1,6 +1,15 @@
 :: StoryMenu
 [[背包|Inventory]]
-[[任务日志|QuestLog]]
+<<link "任务日志">>
+  <<if passage() isnot "QuestLog">>
+    <<set $questLogReturn to {
+      passage: passage(),
+      dynamicSceneId: passage() is "DynamicScene" ? $dynamicSceneId : "",
+      activeNPCId: passage() is "NPCChat" ? $activeNPCId : ""
+    }>>
+  <</if>>
+  <<goto "QuestLog">>
+<</link>>
 [[角色|Character]]
 [[设置|Settings]]
 [[LLM 配置|LLMConfig]]

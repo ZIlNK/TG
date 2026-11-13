@@ -1,4 +1,5 @@
 :: StoryCaption
+<div class="sidebar-stack">
 <<set _healthPct to Math.max(0, Math.min(100, Math.round(($player.health / $player.maxHealth) * 100)))>>
 <<set _staminaPct to Math.max(0, Math.min(100, Math.round(($player.stamina / $player.maxStamina) * 100)))>>
 <<set _stressPct to Math.max(0, Math.min(100, $player.stress))>>
@@ -6,6 +7,11 @@
 <<set _arousalPct to Math.max(0, Math.min(100, $player.arousal))>>
 <<set _controlPct to Math.max(0, Math.min(100, $player.control))>>
 <<set _hungerPct to Math.max(0, Math.min(100, $player.hunger))>>
+
+<figure class="sidebar-portrait">
+  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 320 176'%3E%3Crect width='320' height='176' fill='%231d1d1d'/%3E%3Cpath d='M0 142L82 62l54 53 42-40 142 101H0z' fill='%23292929'/%3E%3Ccircle cx='160' cy='63' r='31' fill='%23818181'/%3E%3Cpath d='M95 176c7-48 30-73 65-73s58 25 65 73H95z' fill='%23656565'/%3E%3Cpath d='M138 61c3-24 18-35 38-29 13 4 21 17 20 34-8-5-16-13-21-24-8 12-20 20-37 19z' fill='%23b7b7b7'/%3E%3Cpath d='M18 20h34M18 20v24M302 20h-34M302 20v24' stroke='%23545454' stroke-width='3' fill='none'/%3E%3C/svg%3E" alt="主角占位肖像">
+  <figcaption><span>PLAYER</span><span>主角档案</span></figcaption>
+</figure>
 
 <div class="sidebar-section">
   <div class="sidebar-title">状态</div>
@@ -23,7 +29,7 @@
 
 <div class="sidebar-section">
   <div class="sidebar-title">位置</div>
-  <div class="sidebar-info"><<print $location>></div>
+  <div class="sidebar-info"><<print (typeof RegionSystem !== "undefined" ? RegionSystem.formatPosition() : $location)>></div>
 </div>
 
 <<if $worldMemory && $worldMemory.events && $worldMemory.events.length gt 0>>
@@ -36,8 +42,9 @@
 </div>
 <</if>>
 
-<div class="sidebar-section">
-  <div class="sidebar-title">属性</div>
+<details class="sidebar-section sidebar-disclosure" open>
+  <summary class="sidebar-title">属性</summary>
+  <div class="sidebar-disclosure-body">
 
   <div class="stat-bar">
     <div class="stat-bar-label"><span>生命</span><span><<print $player.health>>/<<print $player.maxHealth>></span></div>
@@ -73,7 +80,8 @@
     <div class="stat-bar-label"><span>饥饿</span><span><<print $player.hunger>>%</span></div>
     <div class="stat-bar-track"><div class="stat-bar-fill stat-hunger" @style="'width: ' + _hungerPct + '%;'"></div></div>
   </div>
-</div>
+  </div>
+</details>
 
 <div class="sidebar-section">
   <div class="sidebar-title">游戏</div>
@@ -84,8 +92,9 @@
 <<if $player.skills>>
 <<set _topSkills to getTopSkills(3)>>
 <<if _topSkills.length gt 0>>
-<div class="sidebar-section">
-  <div class="sidebar-title">擅长技能</div>
+<details class="sidebar-section sidebar-disclosure" open>
+  <summary class="sidebar-title">擅长技能</summary>
+  <div class="sidebar-disclosure-body">
   <<for _skill range _topSkills>>
     <<set _skillPct to Math.round((_skill.value / 100) * 100)>>
     <<set _xpPct to Math.round(getSkillProgress(_skill.name) * 100)>>
@@ -94,6 +103,8 @@
       <div class="stat-bar-track"><div class="stat-bar-fill stat-skill" @style="'width: ' + _skillPct + '%;'"></div></div>
     </div>
   <</for>>
+  </div>
+</details>
+<</if>>
+<</if>>
 </div>
-<</if>>
-<</if>>
