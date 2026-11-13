@@ -6,3 +6,21 @@ package-lock.json
 Thumbs.db
 tools/tweego.exe
 tools/tweego
+
+# Runtime logs (Node backend)
+logs/
+
+# Backend secrets
+server/.env
+server/llm-config.local.json
+server/llm-config.local.json.tmp
+
+# Machine-local agent permissions
+.claude/settings.local.json
+
+# Sandbox ACL recovery artifacts (absolute paths, machine-local)
+.acl-recovery/
+
+# Third-party character card sources kept only for local reference;
+# the adapted Chinese persona lives in src/scripts/content.js
+character-cards/
