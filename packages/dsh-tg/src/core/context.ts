@@ -1,5 +1,5 @@
 import type { Game, MemoryRecord } from "./schema";
-import { clockLabel, npcPresent, photoQuest, PRODUCTS } from "./world";
+import { clockLabel, npcPresent, PRODUCTS } from "./world";
 
 function gameTime(minute: number): { label: string; period: string } {
   const hour = Math.floor(minute / 60) % 24;
@@ -139,7 +139,6 @@ export function buildNpcContext(game: Game, npcId: string) {
       .filter((q) => q.giver === npcId)
       .map((q) => ({ id: q.id, title: q.title, description: q.description })),
     itemDefinitions: Object.values(w.items).filter((i) => n.items[i.id]),
-    photoQuestTemplate: npcId === "linwanqing" ? photoQuest() : null,
   });
 }
 

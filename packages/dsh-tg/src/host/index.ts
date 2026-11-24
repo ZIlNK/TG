@@ -3,10 +3,17 @@ import { Remote, TypertRemoteService } from "@deepseek-ai/dsh-typert-protocol";
 import { defineDomain, domainTable } from "@deepseek-ai/dsh-storage-domain";
 import type {} from "@deepseek-ai/dsh-api-gateway";
 import type {} from "@deepseek-ai/dsh-typert-registry";
-import { GameSchema, SaveSchema, type Game, type Save } from "../core/schema";
+import {
+  GameSchema,
+  SaveSchema,
+  type Game,
+  type ModelChoice,
+  type Save,
+} from "../core/schema";
 import { GameService, type Store } from "../core/service";
 import { remoteContribution, type RpcInput, type RpcOutput } from "../rpc";
 import { HarnessRunner } from "./model";
+import { currentDefaultModel } from "./model-choice";
 import { TraceService } from "./trace";
 import { AttemptSchema, type Attempt } from "../core/trace";
 
@@ -50,10 +57,32 @@ export class TgRemote extends TypertRemoteService {
     this.game.getGame(r.gameId);
     return this.trace.events(r.gameId, r.sessionId, r.offset, r.limit);
   }
+  // Persist a concrete snapshot while keeping the follow flag: the runner
+  // re-reads the DSH default on every stage, the snapshot keeps old saves and
+  // the settings page readable.
+  private followRoute(model: ModelChoice): ModelChoice {
+    if (!model.follow) return model;
+    const current = currentDefaultModel(this.ctx);
+    if (!current)
+      throw new Error("当前 DSH 没有可用的默认模型配置，请改选具体模型。");
+    return {
+      provider: current.provider,
+      model: current.model,
+      follow: true,
+    };
+  }
   @Remote async models(
     _request: RpcInput<"models">,
   ): Promise<RpcOutput<"models">> {
     const result: RpcOutput<"models"> = [];
+    const current = currentDefaultModel(this.ctx);
+    if (current)
+      result.push({
+        provider: current.provider,
+        model: current.model,
+        label: `跟随 DSH 当前模型（${current.provider} / ${current.model}）`,
+        follow: true,
+      });
     for (const provider of this.ctx.llm.listProviders()) {
       for (const model of await this.ctx.llm.listModels(provider.id))
         result.push({
@@ -68,7 +97,11 @@ export class TgRemote extends TypertRemoteService {
     return this.game.listGames();
   }
   @Remote createGame(r: RpcInput<"createGame">): Promise<Game> {
-    return this.game.createGame(r.name, r.model, r.replaceGameId);
+    return this.game.createGame(
+      r.name,
+      this.followRoute(r.model),
+      r.replaceGameId,
+    );
   }
   @Remote getGame(r: RpcInput<"getGame">): Game {
     return this.game.getGame(r.gameId);
@@ -106,7 +139,7 @@ export class TgRemote extends TypertRemoteService {
     return true;
   }
   @Remote configure(r: RpcInput<"configure">): Promise<Game> {
-    return this.game.configure(r.gameId, r.model, r.theme);
+    return this.game.configure(r.gameId, this.followRoute(r.model), r.theme);
   }
 }
 export async function apply(ctx: Context): Promise<void> {

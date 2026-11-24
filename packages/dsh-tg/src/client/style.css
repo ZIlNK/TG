@@ -202,13 +202,13 @@
   letter-spacing: 3px;
 }
 .tg-landscape {
-  height: 150px;
+  aspect-ratio: 2 / 1;
+  height: auto;
   position: relative;
   overflow: hidden;
   background: #252e3b;
   border: 1px solid #414850;
   margin-bottom: 32px;
-  image-rendering: pixelated;
 }
 .tg-moon {
   position: absolute;
@@ -532,9 +532,6 @@
   .tg-start h1 {
     font-size: 30px;
   }
-  .tg-landscape {
-    height: 115px;
-  }
 }
 @media (prefers-reduced-motion: reduce) {
   .tg-app button {
@@ -555,12 +552,13 @@
   --tg-muted: var(--text-muted);
   --tg-line: var(--border-color);
 }
-.tg-landscape img {
+.tg-landscape-art {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.55;
-  image-rendering: pixelated;
+  object-position: center 58%;
+  opacity: 0.95;
 }
 
 .tg-traces select {
@@ -834,6 +832,85 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   margin: 8px 0 0;
+}
+.tg-dialogue-stage {
+  display: grid;
+  grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+  gap: 28px;
+  align-items: start;
+}
+.tg-dialogue-stage-plain {
+  grid-template-columns: minmax(0, 1fr);
+}
+.tg-dialogue-thread {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tg-portrait {
+  margin: 0;
+  position: sticky;
+  top: 18px;
+  border: 1px solid var(--tg-line);
+  background: var(--tg-panel);
+  overflow: hidden;
+}
+.tg-portrait-art {
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  animation: tg-portrait-breathe 7s ease-in-out infinite;
+}
+.tg-portrait-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: tg-portrait-in 220ms ease both;
+}
+.tg-portrait figcaption {
+  padding: 8px 10px;
+  border-top: 1px solid var(--tg-line);
+  color: var(--tg-muted);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-align: center;
+}
+@keyframes tg-portrait-in {
+  from {
+    opacity: 0;
+    transform: scale(1.02);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes tg-portrait-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.5%);
+  }
+}
+@media (max-width: 860px) {
+  .tg-dialogue-stage {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 18px;
+  }
+  .tg-portrait {
+    position: relative;
+    top: 0;
+    width: min(100%, 260px);
+    margin: 0 auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tg-portrait-art,
+  .tg-portrait-art img {
+    animation: none;
+  }
 }
 @media (max-width: 620px) {
   .tg-dialogue-header {

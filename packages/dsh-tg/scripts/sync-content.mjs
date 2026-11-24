@@ -8,9 +8,41 @@ runInNewContext(
   sandbox,
   { timeout: 1000 },
 );
+const { locations, characterCards } = sandbox.window.GameContent.defaults;
+// Harness uses venue lore and NPC profiles, without legacy story triggers.
+const profiles = Object.fromEntries(
+  Object.entries(characterCards).map(([id, card]) => {
+    const {
+      name,
+      role,
+      description,
+      personality,
+      dialogueExamples,
+      locationId,
+      areaId,
+      agencyResources,
+      scenario,
+      harnessScenario,
+    } = card;
+    return [
+      id,
+      {
+        name,
+        role,
+        description,
+        personality,
+        dialogueExamples,
+        locationId,
+        areaId,
+        agencyResources,
+        scenario: harnessScenario ?? scenario,
+      },
+    ];
+  }),
+);
 writeFileSync(
   new URL("legacy.json", target),
-  JSON.stringify(sandbox.window.GameContent.defaults, null, 2) + "\n",
+  JSON.stringify({ locations, characterCards: profiles }, null, 2) + "\n",
 );
 const themes = {};
 for (const [name, file] of [

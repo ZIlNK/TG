@@ -15,7 +15,8 @@ import {
 } from "../rpc";
 import css from "./style.css?raw";
 import themes from "../content/themes.json";
-import { pixelImage } from "./pixel";
+import { SceneCanvas } from "./SceneCanvas";
+import { sceneFor } from "./scene/locations";
 import { Traces } from "./traces";
 import { DialogueView } from "./dialogue";
 
@@ -30,6 +31,9 @@ const menu = [
   "设置",
 ] as const;
 type Page = (typeof menu)[number];
+// A dedicated key keeps "follow the DSH default" selectable even though its
+// displayed provider/model changes between sessions.
+const FOLLOW = "follow";
 const stageNames = {
   plan: "理解行动",
   reply: "等待人物回应",
@@ -84,6 +88,16 @@ function App({
     mounted = useRef(true),
     inFlight = useRef(false);
   const chooseModel = (): ModelChoice | undefined => {
+    if (modelKey === FOLLOW) {
+      const follow = models.find((m) => m.follow);
+      return (
+        follow && {
+          provider: follow.provider,
+          model: follow.model,
+          follow: true,
+        }
+      );
+    }
     const choice = models.find((m) => `${m.provider}/${m.model}` === modelKey);
     return choice && { provider: choice.provider, model: choice.model };
   };
@@ -91,7 +105,11 @@ function App({
     if (!mounted.current) return;
     activeId.current = next.id;
     setGame(next);
-    setModelKey(`${next.model.provider}/${next.model.model}`);
+    setModelKey(
+      next.model.follow
+        ? FOLLOW
+        : `${next.model.provider}/${next.model.model}`,
+    );
     try {
       localStorage.setItem("tg-current-game", next.id);
     } catch {
@@ -136,7 +154,10 @@ function App({
         setModels(ms);
         setGames(gs);
         setSaved(ss);
-        if (ms[0]) setModelKey(`${ms[0].provider}/${ms[0].model}`);
+        if (ms[0])
+          setModelKey(
+            ms[0].follow ? FOLLOW : `${ms[0].provider}/${ms[0].model}`,
+          );
         let last: string | null = null;
         try {
           last = localStorage.getItem("tg-current-game");
@@ -163,6 +184,17 @@ function App({
       }),
     [onReconnect],
   );
+  useEffect(() => {
+    // Re-read the catalog so the follow entry shows the DSH default as it is
+    // now, not the snapshot taken when the journey began.
+    if (page !== "设置") return;
+    void api
+      .models({})
+      .then((list) => {
+        if (mounted.current) setModels(list);
+      })
+      .catch(() => undefined);
+  }, [api, page]);
   useEffect(() => {
     const tick = (): void => {
       void refresh();
@@ -213,17 +245,18 @@ function App({
       onChange={(e) => setModelKey(e.target.value)}
     >
       {!models.length && <option value="">没有可用模型</option>}
-      {models.map((m) => (
-        <option
-          key={`${m.provider}/${m.model}`}
-          value={`${m.provider}/${m.model}`}
-        >
-          {m.label}
-        </option>
-      ))}
+      {models.map((m) => {
+        const key = m.follow ? FOLLOW : `${m.provider}/${m.model}`;
+        return (
+          <option key={key} value={key}>
+            {m.label}
+          </option>
+        );
+      })}
     </select>
   );
   const w = game?.world;
+  const followEntry = models.find((m) => m.follow);
   return (
     <section
       className="tg-app"
@@ -409,9 +442,9 @@ function App({
             {page === "现场" && !game.dialogue && (
               <>
                 <div className="tg-landscape" aria-hidden="true">
-                  <img
-                    src={pixelImage(w!.locations[w!.location].region)}
-                    alt=""
+                  <SceneCanvas
+                    scene={sceneFor(w!.location)}
+                    minute={w!.minute}
                   />
                   <span>{w!.locations[w!.location].name}</span>
                 </div>
@@ -727,6 +760,16 @@ function App({
             {page === "设置" && (
               <div className="tg-settings">
                 <label>游戏模型{modelSelect}</label>
+                {game.model.follow && (
+                  <p className="tg-muted">
+                    跟随 DSH 当前模型
+                    {followEntry
+                      ? `（当前为 ${followEntry.provider} / ${followEntry.model}）`
+                      : ""}
+                    ：每次阶段调用都会读取 DSH 的模型配置，在 DSH
+                    中切换模型后从下一次行动生效。
+                  </p>
+                )}
                 <button
                   disabled={busy || !chooseModel()}
                   onClick={() =>

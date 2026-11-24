@@ -4,7 +4,7 @@
 
 | 产品线 | 位置 | 状态 |
 | --- | --- | --- |
-| **DeepSeek Harness 原生插件** | `packages/dsh-tg/` | 主线，当前 `0.6.0` |
+| **DeepSeek Harness 原生插件** | `packages/dsh-tg/` | 主线，当前 `0.6.1` |
 | Twine + SugarCube-2 网页游戏 | `src/` + `server/` | 2026-09-29 起冻结，作为历史版本与内容数据源 |
 
 两者共用同一套角色、地点与主题数据：插件通过 `npm run content:sync` 从旧版 `src/scripts/content.js` 与主题 CSS 抽取。改文案仍改旧版文件，再同步。
@@ -19,13 +19,13 @@
 
 ### 安装（桌面版）
 
-首次需先打包：`cd packages/dsh-tg && npm ci --ignore-scripts && npm run pack:plugin`，产物为 `artifacts/dsh-tg-0.6.0.tgz`（`artifacts/` 不进版本库）。
+首次需先打包：`cd packages/dsh-tg && npm ci --ignore-scripts && npm run pack:plugin`，产物为 `artifacts/dsh-tg-0.6.1.tgz`（`artifacts/` 不进版本库）。
 
 先在桌面版「应用」菜单选择**退出**（关窗口只是隐藏），再在插件目录执行：
 
 ```powershell
 cd packages/dsh-tg
-./scripts/manage-desktop.ps1 -DesktopRoot 'D:/AppData/DSH' -Package './artifacts/dsh-tg-0.6.0.tgz'
+./scripts/manage-desktop.ps1 -DesktopRoot 'D:/AppData/DSH' -Package './artifacts/dsh-tg-0.6.1.tgz'
 ```
 
 `DesktopRoot` 改为实际安装目录。脚本使用桌面版自带 CLI，备份 profile 配置后安装并登记 bundle；宿主仍在运行或版本不匹配时拒绝修改。完成后重新打开桌面版，在侧栏选择「文字游戏」。
@@ -34,7 +34,7 @@ cd packages/dsh-tg
 
 ### 玩法
 
-选模型并开局，输入想做的事，或生成现场选项。管理入口只有背包、角色、地图、任务日志、调用记录、存档、设置；移动、交付、购买和接受提议都回到现场进行。
+选具体模型或「跟随 DSH 当前模型」开局，输入想做的事，或生成现场选项。管理入口只有背包、角色、地图、任务日志、调用记录、存档、设置；移动、交付、购买和接受提议都回到现场进行。
 
 - 行动可取消；已确认的结果保留，重试只补齐未完成阶段。
 - 每次提交自动保存，另有 8 个手动栏位与 JSON 导入导出。

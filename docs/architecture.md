@@ -23,7 +23,7 @@
 | 提交流程 | `src/core/service.ts` | 每局串行队列、请求收据、版本与代次、分阶段持久化、取消、恢复 |
 | 上下文 | `src/core/context.ts` | 按阶段和知情人裁剪模型可见信息 |
 | 轨迹 | `src/core/trace.ts` | 结算 diff 与调用索引 |
-| 模型接入 | `src/host/model.ts` | 宿主 Agent、系统提示、游戏工具 |
+| 模型接入 | `src/host/model.ts`、`src/host/model-choice.ts` | 宿主 Agent、系统提示、游戏工具、跟随 DSH 当前模型 |
 | 宿主接缝 | `src/host/index.ts`、`src/rpc.ts` | Cordis 服务、类型化 Remote、两个存储域 |
 | 界面 | `src/client/` | 现场、管理页、对话、调用记录 |
 

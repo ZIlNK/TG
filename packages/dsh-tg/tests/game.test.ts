@@ -9,11 +9,13 @@ import {
 } from "../src/core/service";
 import {
   PlanSchema,
+  ReplySchema,
   validateGame,
   type Game,
+  type Quest,
   type Save,
 } from "../src/core/schema";
-import { createGame, photoQuest } from "../src/core/world";
+import { createGame } from "../src/core/world";
 import { applyPlan, applyReply, copy, npcContext } from "../src/core/rules";
 import { ambientOpportunity } from "../src/core/rules";
 
@@ -25,10 +27,33 @@ const scene = {
     { label: "等待", input: "等待5分钟" },
   ],
 };
-const reply = { text: "谢谢，我记住了。", relationship: 1, offers: [] };
+const reply = {
+  text: "谢谢，我记住了。",
+  relationship: 1,
+  offers: [],
+  expression: "smile" as const,
+};
 const plan = (groups: unknown[][]) =>
   PlanSchema.parse({ decision: "act", message: "", groups });
 const initial = (): Game => createGame("test-game", "测试旅人", model);
+const parkQuest = (): Quest => ({
+  id: "park-inspection",
+  title: "检查公园小径",
+  description: "查看小径是否畅通。",
+  giver: "linwanqing",
+  status: "active",
+  reason: "",
+  due: null,
+  goals: [
+    {
+      kind: "investigate",
+      target: "Park/park_path",
+      item: "",
+      done: false,
+      text: "检查小径",
+    },
+  ],
+});
 class MemoryStore implements Store {
   records = new Map<string, Game>();
   slots = new Map<number, Save>();
@@ -117,20 +142,21 @@ test("23:55 + 15 minutes retains location and investigation across midnight; no 
   assert.equal(result.world.location, g.world.location);
   assert.equal(result.world.stats.stamina, 35);
   assert.equal(result.world.investigations[g.world.location].length, 2);
-  assert.equal(result.world.inventory.photo, 1);
+  assert.deepEqual(result.world.inventory, {});
+  assert.deepEqual(result.world.facts, []);
   validateGame({ ...g, world: result.world });
 });
 test("simultaneous delivery and explanation cost max duration, sequential steps sum", () => {
   const g = initial();
   g.world.location = "Park/park_entrance";
-  g.world.inventory.photo = 1;
+  g.world.inventory.meal = 1;
   const steps = [
-    { kind: "deliver", target: "linwanqing", item: "photo" },
-    { kind: "talk", target: "linwanqing", text: "我在长椅旁找到的。" },
+    { kind: "deliver", target: "linwanqing", item: "meal" },
+    { kind: "talk", target: "linwanqing", text: "这是带给你的午饭。" },
   ];
   assert.equal(applyPlan(g, plan([steps]), "a").minutes, 1);
   assert.equal(applyPlan(g, plan(steps.map((s) => [s])), "a").minutes, 2);
-  assert.equal(g.world.inventory.photo, 1, "pure core must not mutate input");
+  assert.equal(g.world.inventory.meal, 1, "pure core must not mutate input");
 });
 test("missing item rejects entire action, including earlier tentative draft effects", () => {
   const g = initial();
@@ -236,10 +262,10 @@ test("gift and quest offers require a separate acceptance; duplicate acceptance 
         },
         {
           kind: "quest",
-          message: "帮我找照片",
+          message: "帮我看看小径是否畅通",
           item: "",
           quantity: 1,
-          quest: photoQuest(),
+          quest: parkQuest(),
         },
       ],
     },
@@ -262,16 +288,16 @@ test("gift and quest offers require a separate acceptance; duplicate acceptance 
     plan([[{ kind: "accept", target: "a:linwanqing:1" }]]),
     "d",
   ).world;
-  assert.equal(g.world.quests["linwanqing-photo"].status, "active");
+  assert.equal(g.world.quests["park-inspection"].status, "active");
 });
 test("NPC context excludes private inventory, other NPC history and unreported quest progress", () => {
   const g = initial();
   g.world.location = "Park/park_entrance";
   g.world.facts.push("私密事实");
   g.world.npcs.hunter.history.push("秘密交谈");
-  g.world.inventory.photo = 1;
-  g.world.quests["linwanqing-photo"] = photoQuest();
-  g.world.quests["linwanqing-photo"].goals[0].done = true;
+  g.world.inventory.meal = 1;
+  g.world.quests["park-inspection"] = parkQuest();
+  g.world.quests["park-inspection"].goals[0].done = true;
   const context = JSON.stringify(npcContext(g, "linwanqing"));
   assert.ok(!context.includes("私密事实"));
   assert.ok(!context.includes("秘密交谈"));
@@ -320,14 +346,14 @@ test("duplicate requests and simultaneous tabs settle exactly once", async () =>
   assert.equal(after.settlements?.filter((s) => s.changes.length).length, 1);
   await service.close();
 });
-test("response failure and retry never repeat photo delivery or time", async () => {
+test("response failure and retry never repeat item delivery or time", async () => {
   const g = initial();
   g.world.location = "Park/park_entrance";
-  g.world.inventory.photo = 1;
+  g.world.inventory.meal = 1;
   let fail = true;
   const { service } = fixture(async (stage) => {
     if (stage === "plan")
-      return plan([[{ kind: "deliver", target: "linwanqing", item: "photo" }]]);
+      return plan([[{ kind: "deliver", target: "linwanqing", item: "meal" }]]);
     if (stage === "reply") {
       if (fail) throw new Error("model failed");
       return reply;
@@ -338,14 +364,14 @@ test("response failure and retry never repeat photo delivery or time", async () 
   assert.equal(after.run?.stage, "reply");
   assert.equal(after.run?.status, "failed");
   assert.equal(after.world.minute, 481);
-  assert.equal(after.world.inventory.photo, undefined);
+  assert.equal(after.world.inventory.meal, undefined);
   fail = false;
   await service.retryOutput(g.id, after.revision);
   await service.whenIdle(g.id);
   after = service.getGame(g.id);
   assert.equal(after.run?.status, "completed");
   assert.equal(after.world.minute, 481);
-  assert.equal(after.world.npcs.linwanqing.items.photo, 1);
+  assert.equal(after.world.npcs.linwanqing.items.meal, 1);
   assert.equal(after.world.npcs.linwanqing.relationship, 1);
   assert.equal(after.settlements?.filter((s) => s.stage === "plan").length, 1);
   assert.equal(after.settlements?.filter((s) => s.stage === "reply").length, 1);
@@ -455,10 +481,10 @@ test("save/load and import/export preserve receipts and invalidate old generatio
 test("plugin reload marks interruption and resumes uncommitted stage without replay", async () => {
   const g = initial();
   g.world.location = "Park/park_entrance";
-  g.world.inventory.photo = 1;
+  g.world.inventory.meal = 1;
   const first = fixture(async (stage) => {
     if (stage === "plan")
-      return plan([[{ kind: "deliver", target: "linwanqing", item: "photo" }]]);
+      return plan([[{ kind: "deliver", target: "linwanqing", item: "meal" }]]);
     throw new Error("interrupted");
   }, g);
   const committed = await submit(first.service);
@@ -473,7 +499,7 @@ test("plugin reload marks interruption and resumes uncommitted stage without rep
   assert.equal(now.run?.status, "failed");
   await restored.retryOutput(g.id, now.revision);
   await restored.whenIdle(g.id);
-  assert.equal(restored.getGame(g.id).world.npcs.linwanqing.items.photo, 1);
+  assert.equal(restored.getGame(g.id).world.npcs.linwanqing.items.meal, 1);
   assert.equal(restored.getGame(g.id).world.minute, 481);
   await restored.close();
 });
@@ -600,6 +626,19 @@ test("invalid import cannot put a settled action back into plan stage", () => {
   assert.throws(() => validateGame(g), /已结算/);
 });
 
+test("reply expression is optional and limited to portrait tags", () => {
+  const base = { text: "嗯。", relationship: 0, offers: [] };
+  assert.equal(ReplySchema.parse(base).expression, undefined);
+  assert.equal(
+    ReplySchema.parse({ ...base, expression: "look_away" }).expression,
+    "look_away",
+  );
+  assert.equal(
+    ReplySchema.parse({ ...base, expression: "angry" }).expression,
+    undefined,
+  );
+});
+
 test("dialogue entry, two messages and exit call only plan/reply/reply/scene", async () => {
   const g = initial();
   g.world.location = "Park/park_entrance";
@@ -633,7 +672,7 @@ test("dialogue entry, two messages and exit call only plan/reply/reply/scene", a
       gameId: g.id,
       requestId: id,
       expectedRevision: current.revision,
-      input: "我想把照片交给你，然后去街道",
+      input: "我想把午饭交给你，然后去街道",
     };
     await service.submitAction(request, "dialogue");
     await service.submitAction(request, "dialogue"); // Retried transport never charges twice.
@@ -647,6 +686,14 @@ test("dialogue entry, two messages and exit call only plan/reply/reply/scene", a
   assert.equal(
     current.world.memories!.filter((m) => m.speakerId === "player").length,
     2,
+  );
+  const npcMemories = current.world.memories!.filter(
+    (m) => m.speakerId === "linwanqing",
+  );
+  assert.equal(npcMemories.length, 2);
+  assert.deepEqual(
+    npcMemories.map((m) => m.expression),
+    ["smile", "smile"],
   );
   const exit = {
     gameId: g.id,

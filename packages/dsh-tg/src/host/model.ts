@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { Context } from "@deepseek-ai/cordis";
-import type { AgentHandle } from "@deepseek-ai/dsh-agent";
+import type { AgentHandle, AgentOptions } from "@deepseek-ai/dsh-agent";
 import type {} from "@deepseek-ai/dsh-system-prompt";
 import { defineTool } from "@deepseek-ai/dsh-tools";
 import {
@@ -22,6 +22,7 @@ import type { Attempt } from "../core/trace";
 import { buildStageMessages, type StagePromptInput } from "./prompts";
 import { PromptStore } from "./prompts/loader";
 import { EnterDialogueSchema, validateDialogueEntry } from "../core/dialogue";
+import { resolveModel } from "./model-choice";
 
 export class HarnessRunner implements ModelRunner {
   constructor(
@@ -36,6 +37,9 @@ export class HarnessRunner implements ModelRunner {
     signal: AbortSignal,
   ): Promise<unknown> {
     signal.throwIfAborted();
+    // Read the route once per stage: a DSH model switch applies from the next
+    // stage call, and the attempt index records the model actually used.
+    const route = resolveModel(this.ctx, game.model);
     const schema =
       stage === "plan"
         ? PlanSchema
@@ -81,7 +85,8 @@ export class HarnessRunner implements ModelRunner {
       npcId:
         stage === "reply" ? (context as { npc: { id: string } }).npc.id : "",
       input: game.run?.input ?? "",
-      ...game.model,
+      provider: route.provider,
+      model: route.model,
       started: new Date().toISOString(),
       ended: "",
       status: "running",
@@ -93,9 +98,15 @@ export class HarnessRunner implements ModelRunner {
       handle = await this.ctx.agents.create({
         sessionId: attempt.sessionId as never,
         agentOptions: {
-          provider: game.model.provider,
-          model: game.model.model,
+          provider: route.provider,
+          model: route.model,
           maxTokens: 4096,
+          ...(route.reasoningEffort
+            ? {
+                reasoningEffort:
+                  route.reasoningEffort as AgentOptions["reasoningEffort"],
+              }
+            : {}),
         },
         signal,
         setup: (ctx, agent) => {

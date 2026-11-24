@@ -1,6 +1,6 @@
 {
   "name": "dsh-tg",
-  "version": "0.6.0",
+  "version": "0.6.6",
   "description": "TG 中文文字游戏：独立游戏面板与持久化规则引擎",
   "type": "module",
   "license": "UNLICENSED",

@@ -10,7 +10,7 @@ import {
   TIERS,
 } from "./schema";
 import { buildNpcContext } from "./context";
-import { BALANCE, npcPresent, photoQuest, PRODUCTS } from "./world";
+import { BALANCE, npcPresent, PRODUCTS } from "./world";
 
 export const copy = <T>(value: T): T => structuredClone(value);
 export const nextSeed = (seed: number): number =>
@@ -124,28 +124,20 @@ function step(
       const repeated = history.includes(detail);
       history.push(detail);
       w.skills.感知 += minutes >= 15 ? 3 : 1;
-      let result = repeated
+      const result = repeated
         ? `再次检查${detail}，没有发现新的变化。`
         : `检查了${detail}，记录了调查经过。`;
-      if (w.location === "Park/park_path" && !w.facts.includes("photo-found")) {
-        w.inventory.photo = (w.inventory.photo || 0) + 1;
-        w.facts.push("photo-found");
-        result += "在长椅附近找到了晚晴遗失的合影。";
-        progress(w, "investigate", w.location, "photo");
-      } else progress(w, "investigate", w.location);
+      progress(w, "investigate", w.location);
       return { minutes, result };
     }
     case "deliver": {
       const who = name(s.target);
       requireRule(w.items[s.item], "物品不存在。");
-      if (s.item === "photo")
-        requireRule(s.target === "linwanqing", "照片应归还给晚晴。");
       take(w.inventory, s.item);
       const npc = w.npcs[s.target];
       npc.items[s.item] = (npc.items[s.item] || 0) + 1;
       const result = `已将${w.items[s.item].name}交给${who}。`;
       learn(w, s.target, result + s.text);
-      if (s.item === "photo") w.facts.push("photo-returned");
       progress(w, "deliver", s.target, s.item);
       return { minutes, result };
     }
@@ -184,12 +176,6 @@ function step(
             "任务已经存在。",
           );
           w.quests[offer.quest.id] = copy(offer.quest);
-          if (offer.quest.id === "linwanqing-photo") {
-            w.quests[offer.quest.id].goals[0].done =
-              w.facts.includes("photo-found");
-            w.quests[offer.quest.id].goals[1].done =
-              w.facts.includes("photo-returned");
-          }
         }
       }
       offer.status = s.kind === "accept" ? "accepted" : "declined";
@@ -546,8 +532,6 @@ export function applyReply(
         );
         requireRule(!goal.item || w.items[goal.item], "任务物品不存在。");
       }
-      if (proposed.quest.id === "linwanqing-photo")
-        proposed.quest = photoQuest();
     }
     const id = `${actionId}:${npcId}:${i}`;
     w.offers[id] = { ...proposed, id, npcId, status: "offered" };
@@ -562,6 +546,7 @@ export function applyReply(
     text: reply.text,
     locationId: w.location,
     speakerId: npcId,
+    expression: reply.expression,
     knownBy: ["player", npcId],
     relatedNpcIds: [npcId],
     relatedItemIds: reply.offers

@@ -56,17 +56,25 @@ test("investigation records private observation, delivery records observation se
   const g = initial();
   g.world.location = "Park/park_path";
   const before = structuredClone(g);
-  const found = applyPlan(g, plan([[{ kind: "investigate" }]]), "find");
+  const detail = "观察长椅边的树影";
+  const found = applyPlan(
+    g,
+    plan([[{ kind: "investigate", text: detail }]]),
+    "find",
+  );
   assert.deepEqual(g, before); // Tool preflight is side-effect free.
   assert.deepEqual(found.world.memories?.[0].knownBy, ["player"]);
-  assert.ok(found.world.memories?.[0].relatedItemIds.includes("photo"));
-  g.world = found.world;
-  g.world.location = "Park/park_entrance";
   assert.ok(
-    !JSON.stringify(buildNpcContext(g, "linwanqing")).includes(
-      "在长椅附近找到了",
+    buildSceneContext({ ...g, world: found.world }).memories[0].text.includes(
+      detail,
     ),
   );
+  g.world = found.world;
+  g.world.location = "Park/park_entrance";
+  const npcContext = JSON.stringify(buildNpcContext(g, "linwanqing"));
+  assert.ok(!npcContext.includes(detail));
+  assert.doesNotMatch(npcContext, /照片|合影|photoQuestTemplate/);
+  g.world.inventory.meal = 1;
   g.world = applyPlan(
     g,
     plan([
@@ -74,8 +82,8 @@ test("investigation records private observation, delivery records observation se
         {
           kind: "deliver",
           target: "linwanqing",
-          item: "photo",
-          text: "我听别人说这是你的。",
+          item: "meal",
+          text: "这是带给你的午饭。",
         },
       ],
     ]),
@@ -87,10 +95,9 @@ test("investigation records private observation, delivery records observation se
   assert.equal(records[1].kind, "dialogue");
   assert.equal(records[1].speakerId, "player");
   assert.deepEqual(records[0].knownBy, ["player", "linwanqing"]);
+  assert.deepEqual(records[0].relatedItemIds, ["meal"]);
   assert.ok(
-    JSON.stringify(buildNpcContext(g, "linwanqing")).includes(
-      "已将晚晴的合影交给",
-    ),
+    JSON.stringify(buildNpcContext(g, "linwanqing")).includes("已将快餐交给"),
   );
   validateGame(g);
 });
@@ -103,7 +110,7 @@ test("failed multi-step plans and invalid replies leave no effects or experience
       g,
       plan([
         [{ kind: "talk", target: "linwanqing", text: "你好" }],
-        [{ kind: "deliver", target: "linwanqing", item: "photo" }],
+        [{ kind: "deliver", target: "linwanqing", item: "meal" }],
       ]),
       "bad",
     ),

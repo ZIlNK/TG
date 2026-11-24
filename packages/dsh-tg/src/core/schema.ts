@@ -12,7 +12,13 @@ const id = z
     "保留编号不可使用",
   );
 const count = z.number().int().nonnegative().max(1000000);
-export const ModelSchema = z.object({ provider: id, model: id });
+// `follow` keeps the last known route as a fallback while asking the Host to
+// resolve the current DSH default at every stage call. Older saves omit it.
+export const ModelSchema = z.object({
+  provider: id,
+  model: id,
+  follow: z.boolean().optional(),
+});
 export type ModelChoice = z.infer<typeof ModelSchema>;
 export const StepSchema = z
   .object({
@@ -108,6 +114,17 @@ export const OfferSchema = z.object({
   quest: QuestSchema.nullable(),
   status: z.enum(["offered", "accepted", "declined"]),
 });
+export const ExpressionSchema = z.enum([
+  "neutral",
+  "smile",
+  "shy",
+  "worried",
+  "sad",
+  "surprised",
+  "thinking",
+  "look_away",
+]);
+export type Expression = z.infer<typeof ExpressionSchema>;
 export const ReplySchema = z
   .object({
     text: text.min(1),
@@ -125,6 +142,7 @@ export const ReplySchema = z
           .strict(),
       )
       .max(2),
+    expression: ExpressionSchema.optional().catch(undefined),
   })
   .strict();
 export type Reply = z.infer<typeof ReplySchema>;
@@ -178,6 +196,7 @@ export const MemorySchema = z.object({
   actionId: id,
   generation: count,
   speakerId: z.string().max(160),
+  expression: ExpressionSchema.optional().catch(undefined),
   knownBy: z.array(id).min(1),
   relatedNpcIds: z.array(id),
   relatedItemIds: z.array(id),

@@ -1,5 +1,5 @@
 import content from "../content/legacy.json";
-import { type Game, type ModelChoice, type World, type Quest } from "./schema";
+import { type Game, type ModelChoice, type World } from "./schema";
 
 export const BALANCE = {
   localTravel: 5,
@@ -61,33 +61,6 @@ export const PRODUCTS = [
     hunger: -30,
   },
 ];
-export function photoQuest(): Quest {
-  return {
-    id: "linwanqing-photo",
-    title: "晚晴遗失的合影",
-    description: "在林间小径寻找合影，当面归还晚晴。没有预先约定的报酬。",
-    giver: "linwanqing",
-    status: "active",
-    reason: "",
-    due: null,
-    goals: [
-      {
-        kind: "investigate",
-        target: "Park/park_path",
-        item: "photo",
-        done: false,
-        text: "在林间小径找到照片",
-      },
-      {
-        kind: "deliver",
-        target: "linwanqing",
-        item: "photo",
-        done: false,
-        text: "当面归还照片",
-      },
-    ],
-  };
-}
 export function createWorld(name: string): World {
   const locations: World["locations"] = {};
   for (const [region, list] of Object.entries(areas)) {
@@ -138,11 +111,6 @@ export function createWorld(name: string): World {
     };
   }
   const items: World["items"] = {
-    photo: {
-      id: "photo",
-      name: "晚晴的合影",
-      description: "晚晴和母亲的合影，应交还给晚晴。",
-    },
     "blank-paper": {
       id: "blank-paper",
       name: "空白纸",

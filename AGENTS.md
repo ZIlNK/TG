@@ -8,7 +8,7 @@
 
 | 产品线 | 位置 | 状态 |
 | --- | --- | --- |
-| **DeepSeek Harness 原生插件（主线）** | `packages/dsh-tg/` | 活跃开发，当前 `0.6.0`（2026-10-26） |
+| **DeepSeek Harness 原生插件（主线）** | `packages/dsh-tg/` | 活跃开发，当前 `0.6.6`（2026-11-23） |
 | 旧版 Twine + SugarCube-2 网页游戏 | `src/` + `server/` | 2026-09-29 起冻结，仅作历史版本与内容数据源 |
 
 插件的角色、地点、主题数据由 `packages/dsh-tg/scripts/sync-content.mjs` 从旧版 `src/scripts/content.js` 与 `src/styles/theme-*.css` 抽取。**改人设或地点文案仍要改旧版文件，再执行 `npm run content:sync`。**
@@ -33,9 +33,9 @@ npm run pack:plugin
 npm run content:sync
 ```
 
-本机验证基线（2026-11-13）：Node v22.20.0；旧版 323 条测试、插件 53 条测试全部通过，`tsc --noEmit` 无错误。
+本机验证基线（2026-11-23）：Node v22.20.0；旧版 323 条测试、插件 61 条测试全部通过，`tsc --noEmit` 无错误。
 
-在禁止子进程的沙箱里，`npm test` 会以 `spawn EPERM` 失败（tsx/esbuild 需要起子进程），不是代码问题。逐文件跑可绕过：`node --test --experimental-test-isolation=none tests/<file>.test.js`。
+在禁止子进程的沙箱里，`npm test` 会以 `spawn EPERM` 失败（tsx/esbuild 需要起子进程），不是代码问题。旧版测试逐文件跑可绕过：`node --test --experimental-test-isolation=none tests/<file>.test.js`。插件测试可用 Node 自带的 `--experimental-transform-types` 在进程内运行，配合一个把无扩展名相对导入补 `.ts`、并为 JSON 返回 `shortCircuit` 的 loader；允许子进程的环境直接 `npm test` 更简单。
 
 ## 插件架构与边界
 
